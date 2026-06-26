@@ -1,7 +1,6 @@
 const dns = require('node:dns');
 
 const checkInternetConnection = (req, res, next) => {
-    // Only run the internet check in production mode
     if (process.env.NODE_ENV === 'production') {
         dns.lookup('google.com', (err) => {
             if (err && (err.code === 'ENOTFOUND' || err.code === 'EAI_AGAIN')) {

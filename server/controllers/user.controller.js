@@ -6,10 +6,8 @@ require("dotenv").config()
 const jwtSecretKey = process.env.jwtSecretKey
 
 const userSignup = (req, res) => {
-    const { fullName, email, matricNumber, department, phoneNumber, level, pin } = req.body
+    const { fullName, email, matricNumber, department, phoneNumber, level, pin, role } = req.body
     console.log(req.body)
-
-    let userDetails = new User(req.body)
 
     if (!fullName || !email || !matricNumber || !department || !phoneNumber || !level || !pin) {
         return res.status(400).json({
@@ -29,13 +27,19 @@ const userSignup = (req, res) => {
 
             const salt = bcrypt.genSaltSync(10)
             const hashedPin = bcrypt.hashSync(req.body.pin, salt)
-            req.body.pin = hashedPin
 
-            const userInformation = req.body
-            const newUserInformation = new User(userInformation)
-
+            const userInformation = {
+                fullName,
+                email,
+                matricNumber,
+                department,
+                phoneNumber,
+                level,
+                pin: hashedPin,
+                role: role === 'rep' ? 'rep' : 'student' // Explicitly set role
+            };
+            const newUserInformation = new User(userInformation);
             const token = jwt.sign({ matricNumber }, `${jwtSecretKey}`, { expiresIn: "1hr" })
-
             return newUserInformation.save()
                 .then(() => {
                     res.status(201).json({
@@ -118,7 +122,7 @@ const forgotPin = (req, res) => {
     }
 
     User.findOne({ matricNumber, email })
-        .then((foundUser) => {
+        .then((foundUser) => { 
             if (!foundUser) {
                 return res.status(404).json({
                     message: "User not found with the provided matric number and email"
@@ -145,68 +149,7 @@ const forgotPin = (req, res) => {
         });
 };
 
-
-
-const verifyToken = (req, res) => {
-    const authHeader = req.headers.authorization
-    if (!authHeader) {
-        res.status(400).json({
-            status: false,
-            message: "No token provided"
-        })
-    }
-
-    const token = authHeader.split(" ")[1]
-
-    jwt.verify(token, jwtSecretKey, (err, result) => {
-        if (err) {
-            console.log(err);
-            return res.status(500).json({
-                status: false,
-                message: "Invalid token"
-            })
-        }
-
-        console.log(result);
-        const userMatric = result.matricNumber
-
-        if (userMatric) {
-            User.findOne({ matricNumber: req.body.matricNumber })
-                .then((response) => {
-                    if (!response) {
-                        return res.status(404).json({
-                            status: false,
-                            message: "User not found",
-                        })
-                    }
-
-                    return res.status(200).json({
-                        status: true,
-                        message: "Token verified, welcome to dashboard",
-                        fullName: response.fullName,
-                        matricNumber: response.matricNumber,
-                        role: response.role
-                    })
-                })
-
-                .catch((error) => {
-                    console.log(error);
-                    return res.status(500).json({
-                        status: false,
-                        message: "Failed to get user data"
-                    })
-                })
-        } else {
-            return res.status(400).json({
-                status: false,
-                message: "Invalid token payload"
-            })
-        }
-    })
-}
-
-
-module.exports = { userSignup, userSignin, forgotPin, verifyToken };
+module.exports = { userSignup, userSignin, forgotPin };
 // http://localhost:3142/api/changePin/6a2c1a43430f7641c6c48926
 
 // {
