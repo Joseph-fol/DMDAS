@@ -14,11 +14,11 @@ const URI = process.env.MONGO_URI;
 
 const dns = require("node:dns");
 const port = process.env.PORT;
+
 dns.setDefaultResultOrder("ipv4first");
 dns.setServers(["8.8.8.8", "8.8.4.4"]);
 
-mongoose
-  .connect(URI)
+mongoose.connect(URI)
   .then(() => {
     console.log("Connected to MONGODB");
     app.listen(port, () => {

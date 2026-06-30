@@ -10,7 +10,7 @@ let userSchema = mongoose.Schema({
         required: true
     },
     matricNumber: {
-        type: Number,
+        type: String,
         required: true
     },
     department: {
@@ -18,7 +18,7 @@ let userSchema = mongoose.Schema({
         required: true
     },
     phoneNumber: {
-        type: Number,
+        type: String,
         required: true
     },
     level: {
