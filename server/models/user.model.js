@@ -33,6 +33,12 @@ let userSchema = mongoose.Schema({
         type: String,
         enum: ["rep", "student"],
         default: "student"
+    },
+    pinResetOTP: {
+        type: String
+    },
+    pinResetExpires: {
+        type: Date
     }
 }, {timestamps: true})
 
