@@ -1,0 +1,33 @@
+const mongoose = require("mongoose")
+
+const Transaction = new mongoose.Schema({
+    matricNumber: {
+        type: String,
+        required: true
+    },
+    courseCode: {
+        type: String,
+        required: true
+    },
+    status:{
+        type: String,
+        required: true,
+        enum: ["pending", "approved", "rejected"],
+        default: "pending"
+    },
+
+    accountNumber: {
+        type: String,
+        required: true
+    },
+    
+    amount: {
+        type: Number,
+        required: true
+    },
+    date: {
+        type: Date,
+        default: Date.now
+    }
+
+}, {timestamps: true})

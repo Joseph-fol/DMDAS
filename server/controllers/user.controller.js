@@ -1,6 +1,7 @@
 const User = require("../models/user.model");
 const bcrypt = require("bcrypt");
 const jwt = require("jsonwebtoken");
+const Transaction = require("../models/transaction.model");
 
 const accountSid = `${process.env.TWILIO_ACCOUNT_SID}`;
 const authToken = `${process.env.TWILIO_AUTH_TOKEN}`;
@@ -147,19 +148,23 @@ const requestPinReset = (req, res) => {
         });
       }
 
-      const generatedOTP = Math.floor(100000 + Math.random() * 900000).toString(); 
+      const generatedOTP = Math.floor(
+        100000 + Math.random() * 900000,
+      ).toString();
       const otpExpires = Date.now() + 600000; // OTP expires in 10 minutes
+      const userPhoneNumber = user.phoneNumber;
 
       user.pinResetOTP = generatedOTP;
       user.pinResetExpires = otpExpires;
 
-      user.save()
+      user
+        .save()
         .then(() => {
           // const userPhoneNumber = `+${user.phoneNumber}`;
           return client.messages.create({
             from: "whatsapp:+14155238886", // Your Twilio WhatsApp number
-            // to: `whatsapp:${userPhoneNumber}`,
-            to: `whatsapp:+2348125831469`,
+            to: `whatsapp:+234${userPhoneNumber}`,
+            // to: `whatsapp:+2348125831469`,
             body: `Your DMDAS verification code is ${generatedOTP}. It will expire in 10 minutes.`,
           });
         })
@@ -190,7 +195,9 @@ const resetPinWithOTP = (req, res) => {
   }
 
   if (newPin !== confirmPin) {
-    return res.status(400).json({ message: "New PIN and confirm PIN do not match." });
+    return res
+      .status(400)
+      .json({ message: "New PIN and confirm PIN do not match." });
   }
 
   User.findOne({
@@ -204,18 +211,19 @@ const resetPinWithOTP = (req, res) => {
         return res.status(400).json({ message: "Invalid or expired OTP." });
       }
 
-      // Hash the new PIN
-      bcrypt.genSalt(10)
+      bcrypt
+        .genSalt(10)
         .then((salt) => bcrypt.hash(newPin, salt))
         .then((hashedPin) => {
-          // Update user's PIN and clear OTP fields
           user.pin = hashedPin;
           user.pinResetOTP = undefined;
           user.pinResetExpires = undefined;
           return user.save();
         })
         .then(() => {
-          res.status(200).json({ message: "Your PIN has been successfully reset." });
+          res
+            .status(200)
+            .json({ message: "Your PIN has been successfully reset." });
         })
         .catch((error) => {
           console.error("Error during resetPinWithOTP:", error);
@@ -228,6 +236,45 @@ const resetPinWithOTP = (req, res) => {
     });
 };
 
+const initialiatePayment = (req, res) => {
+  const payStackBaseURL = "https://api.paystack.co";
+
+  const { matricNumber, amount, courseCode } = req.body;
+  if (!matricNumber || !amount || !courseCode) {
+    return res.status(400).json({
+      message: "All fields are required",
+    });
+  }
+
+  const existingTx = Transaction.findOne({
+    matricNumber,
+    courseCode,
+    status: { $in: ["verified", "completed"] },
+  });
+  if (existingTx) {
+    return res
+      .status(400)
+      .json({ message: "You have already paid for this course manual." });
+  }
+
+  const studentEmail = `${matricNumber}@gmail.com`;
+
+  const headers = {
+    Authorization: `Bearer ${process.env.PAYSTACK_SECRET_KEY}`,
+    "Content-Type": "application/json",
+  };
+
+  fetch(`${payStackBaseURL}/transaction/initialize`, {
+    method: "POST",
+    headers: "headers",
+    body: JSON.stringify({
+      email: studentEmail,
+      firstName: "Student",
+      lastName: matricNumber,
+      phoneNumber: `+234${phoneNumber}`,
+    }),
+  });
+};
 module.exports = {
   userSignup,
   userSignin,
