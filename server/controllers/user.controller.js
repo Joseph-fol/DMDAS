@@ -236,49 +236,115 @@ const resetPinWithOTP = (req, res) => {
     });
 };
 
-const initialiatePayment = (req, res) => {
+const initiatePayment = async (req, res) => {
   const payStackBaseURL = "https://api.paystack.co";
 
-  const { matricNumber, amount, courseCode } = req.body;
-  if (!matricNumber || !amount || !courseCode) {
+  const { amount, courseCode } = req.body;
+  const { matricNumber, email, fullName, phoneNumber } = req.user; // Get user info from the verified token
+  if (!amount || !courseCode) {
     return res.status(400).json({
-      message: "All fields are required",
+      message: "Amount and course code are required",
     });
   }
 
-  const existingTx = Transaction.findOne({
-    matricNumber,
-    courseCode,
-    status: { $in: ["verified", "completed"] },
-  });
-  if (existingTx) {
-    return res
-      .status(400)
-      .json({ message: "You have already paid for this course manual." });
+  try {
+    const existingTx = await Transaction.findOne({
+      matricNumber,
+      courseCode,
+      status: { $in: ["approved", "pending"] },
+    });
+
+    if (existingTx) {
+      return res.status(400).json({
+        message:
+          "You have already initiated or completed payment for this course manual.",
+      });
+    }
+
+    const nameParts = fullName.split(" ");
+    const firstName = nameParts[0];
+    const lastName = nameParts.slice(1).join(" ");
+
+    const customerResponse = await fetch(`${payStackBaseURL}/customer`, {
+      method: "POST",
+      headers: {
+        Authorization: `Bearer ${process.env.PAYSTACK_SECRET_KEY}`,
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify({
+        email,
+        firstName,
+        lastName,
+        phoneNumber,
+      }),
+    });
+
+    const responseData = await customerResponse.json();
+    return res.status(200).json(responseData);
+
+    console.log(responseData);
+
+    // const customerCode = customerResult.data.customer_code;
+    // const accountResponse = await fetch(`${payStackBaseURL}/dedicated_account`, {
+    //   customer: customerCode,
+    //   preferredBank: process.env.NODE_ENV == "production" ? 'wema-bank': "test-bank"
+    // })
+
+    // const paymentData = {
+    //     email, // Use the authenticated user's email
+    //     amount: amount * 100, // Paystack expects amount in kobo
+    //     metadata: {
+    //         matricNumber,
+    //         courseCode
+    //     }
+    // };
+
+    // const paystackResponse = await fetch(`${payStackBaseURL}/transaction/initialize`, {
+    //     method: "POST",
+    //     headers: {
+    //         Authorization: `Bearer ${process.env.PAYSTACK_SECRET_KEY}`,
+    //         "Content-Type": "application/json",
+    //     },
+    //     body: JSON.stringify(paymentData),
+    // });
+
+    // const responseData = await paystackResponse.json();
+
+    // if (!paystackResponse.ok) {
+    //     console.error("Paystack API Error:", responseData);
+    //     return res.status(paystackResponse.status).json({ message: "Payment initialization failed.", details: responseData.message });
+    // }
+
+    // return res.status(200).json(responseData);
+  } catch (error) {
+    console.error("Error during payment initiation:", error);
+    return res.status(500).json({ message: "Internal Server Error" });
   }
-
-  const studentEmail = `${matricNumber}@gmail.com`;
-
-  const headers = {
-    Authorization: `Bearer ${process.env.PAYSTACK_SECRET_KEY}`,
-    "Content-Type": "application/json",
-  };
-
-  fetch(`${payStackBaseURL}/transaction/initialize`, {
-    method: "POST",
-    headers: "headers",
-    body: JSON.stringify({
-      email: studentEmail,
-      firstName: "Student",
-      lastName: matricNumber,
-      phoneNumber: `+234${phoneNumber}`,
-    }),
-  });
 };
+
 module.exports = {
   userSignup,
   userSignin,
   requestPinReset,
   resetPinWithOTP,
+  initiatePayment,
 };
 // http://localhost:3142/api/changePin/6a2c1a43430f7641c6c48926
+
+// {
+//   "fullName": "Ishola Isaiah Taiwo",
+//   "email": "isholaisaiah43@gmail.com",
+//   "matricNumber": "2022007890",
+//   "department": "CPE",
+//   "phoneNumber": "08123223232",
+//   "level": "400level",
+//   "pin": "2005",
+//   "role": "rep"
+// }
+
+// {
+//   "amount": 2000,
+//   "courseCode": "CPE 304"
+// }
+
+// "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJtYXRyaWNOdW1iZXIiOiIyMDIyMDA3ODkwIiwiaWF0IjoxNzgzMjgxNDMyLCJleHAiOjE3ODMyODUwMzJ9.3H56bFjvZxg5PD0RF3Bmplj0Ep8lMfuFCH14PlK2HN4"

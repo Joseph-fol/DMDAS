@@ -1,6 +1,6 @@
 const mongoose = require("mongoose")
 
-const Transaction = new mongoose.Schema({
+const transactionSchema = new mongoose.Schema({
     matricNumber: {
         type: String,
         required: true
@@ -31,3 +31,5 @@ const Transaction = new mongoose.Schema({
     }
 
 }, {timestamps: true})
+
+module.exports = mongoose.model("Transaction", transactionSchema)
