@@ -24,15 +24,7 @@ const userSignup = (req, res) => {
   } = req.body;
   console.log(req.body);
 
-  if (
-    !fullName ||
-    !email ||
-    !matricNumber ||
-    !department ||
-    !phoneNumber ||
-    !level ||
-    !pin
-  ) {
+  if (!fullName || !email || !matricNumber || !department || !phoneNumber || !level || !pin || !role) {
     return res.status(400).json({
       message: "All input fields are required",
     });

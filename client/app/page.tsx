@@ -1,5 +1,6 @@
 "use client";
 
+import axios from "axios";
 import { useRef, useState } from "react";
 import { ErrorMessage, Field, Form, Formik, type FormikHelpers } from "formik";
 import * as Yup from "yup";
@@ -9,7 +10,7 @@ type RegistrationValues = {
   email: string;
   matricNumber: string;
   department: string;
-  whatsapp: string;
+  phoneNumber: string;
   level: string;
   role: "student" | "representative";
   pin: string;
@@ -19,42 +20,34 @@ const departments = [
   "Computer Engineering",
   "Electrical & Electronics Engineering",
   "Civil Engineering",
-  "Mass Communication",
-  "Accounting",
+  "Agricultural Engineering",
+  "Mechanical Engineering",
+  "Food Engineering"
 ];
 
 const levels = ["100", "200", "300", "400", "500"];
 
 const initialValues: RegistrationValues = {
-  fullName: " ",
-  email: "student@lautech.edu.ng",
+  fullName: "",
+  email: "",
   matricNumber: "",
   department: departments[0],
-  whatsapp: "",
+  phoneNumber: "",
   level: "100",
   role: "student",
   pin: "",
 };
 
+
 const validationSchema = Yup.object({
   fullName: Yup.string().trim().min(3, "Enter your full name").required("Full name is required"),
   email: Yup.string().trim().email("Enter a valid email").required("Email is required"),
-  matricNumber: Yup.string()
-    .trim()
-    .matches(/^[A-Za-z0-9_-]+$/, "Use letters, numbers, hyphen or underscore only")
-    .required("Matric number is required"),
+  matricNumber: Yup.string().trim().matches(/^[A-Za-z0-9_-]+$/, "Use letters, numbers, hyphen or underscore only").required("Matric number is required"),
   department: Yup.string().required("Department is required"),
-  whatsapp: Yup.string()
-    .trim()
-    .matches(/^[0-9+\s-]{8,20}$/, "Enter a valid WhatsApp number")
-    .required("WhatsApp number is required"),
+  phoneNumber: Yup.string().trim().matches(/^[0-9+\s-]{8,20}$/, "Enter a valid WhatsApp number").required("WhatsApp number is required"),
   level: Yup.string().required("Level is required"),
-  role: Yup.mixed<RegistrationValues["role"]>()
-    .oneOf(["student", "representative"])
-    .required(),
-  pin: Yup.string()
-    .matches(/^\d{4}$/, "PIN must be exactly 4 digits")
-    .required("PIN is required"),
+  role: Yup.mixed<RegistrationValues["role"]>().oneOf(["student", "representative"]).required(),
+  pin: Yup.string().matches(/^\d{4}$/, "PIN must be exactly 4 digits").required("PIN is required"),
 });
 
 function InputError({ name }: { name: keyof RegistrationValues }) {
@@ -64,27 +57,48 @@ function InputError({ name }: { name: keyof RegistrationValues }) {
 export default function Home() {
   const pinInputRefs = useRef<Array<HTMLInputElement | null>>([]);
   const [successMessage, setSuccessMessage] = useState<string | null>(null);
+  const [errorMessage, setErrorMessage] = useState<string | null>(null);
 
-  const handleSubmit = async (
-    values: RegistrationValues,
-    actions: FormikHelpers<RegistrationValues>,
-  ) => {
+  // const navigate = 
+
+  const handleSubmit = async ( values: RegistrationValues, actions: FormikHelpers<RegistrationValues>,) =>{
     setSuccessMessage(null);
+    setErrorMessage(null);
 
-    await new Promise((resolve) => setTimeout(resolve, 700));
+    const payload = {...values, whatsapp: values.phoneNumber,};
+    console.log("Registration payload:", payload);
 
-    setSuccessMessage(`Account authenticated for ${values.fullName}.`);
-    actions.setSubmitting(false);
-    actions.resetForm({ values });
+    const baseURL = "http://localhost:5142"
+
+    try {
+      const response = await axios.post<{ message?: string }>(`${baseURL}/api/signup`, payload);
+      const data = response.data;
+
+      setSuccessMessage(data.message ?? "Registration request received successfully.");
+      // window.location.href = "signin"
+      actions.resetForm();
+      
+      pinInputRefs.current[0]?.focus();
+    } catch (error) {
+      if (axios.isAxiosError(error)) {
+        setErrorMessage(
+          (error.response?.data as { message?: string } | undefined)?.message ?? error.message ?? "Unable to submit registration.",
+        );
+      } else {
+        setErrorMessage(error instanceof Error ? error.message : "Unable to submit registration.");
+      }
+    } finally {
+      actions.setSubmitting(false);
+    }
   };
 
   return (
     <main className="min-h-screen bg-[#fdf8f9] font-sans text-slate-900">
       <div className="mx-auto grid min-h-screen max-w-375 lg:grid-cols-[1.05fr_0.95fr]">
-        <section className="relative isolate hidden overflow-hidden border-r border-slate-200/70 bg-[#381E25] px-10 py-12 lg:flex lg:flex-col lg:justify-center">
+        <section className="relative isolate hidden overflow-hidden border-r border-slate-200/70 bg-[#fde7ed] px-10 py-12 lg:flex lg:flex-col lg:justify-center">
           <div className="absolute inset-0">
-            <div className="absolute left-[-10%] top-[8%] h-288 w-6xl rounded-full border border-slate-200/80" />
-            <div className="absolute left-[6%] top-[18%] h-216 w-216 rounded-full border border-slate-200/80" />
+            <div className="absolute left-[-10%] top-[8%] h-288 w-6xl rounded-full border border-[#381E25]" />
+            <div className="absolute left-[6%] top-[18%] h-216 w-216 rounded-full border border-[#c5a7af]" />
             <div className="absolute right-[18%] top-[12%] h-16 w-16 rounded-full border border-[#F43F5E] bg-white " />
             <div className="absolute right-[22%] top-[16.4%] h-3 w-3 rounded-full bg-[#381E25]" />
           </div>
@@ -97,13 +111,13 @@ export default function Home() {
                   <path d="M6.5 10.25v4.5c0 .9 2.46 2.25 5.5 2.25s5.5-1.35 5.5-2.25v-4.5" />
                 </svg>
               </div>
-              <span className="text-3xl font-black tracking-tight text-white">DMDAS</span>
+              <span className="text-3xl font-black tracking-tight text-[#381E25]">DMDAS</span>
             </div>
 
-            <h1 className="text-4xl font-black tracking-tight text-white lg:text-5xl">
+            <h1 className="text-4xl font-black tracking-tight text-[#381E25] lg:text-5xl">
               Get Started with DMDAS
             </h1>
-            <p className="mx-auto mt-6 max-w-md text-lg leading-8 text-[#fdf8f9]">
+            <p className="mx-auto mt-6 max-w-md text-lg leading-8 text-slate-900">
               Join the ecosystem to purchase or distribute academic resources safely.
             </p>
           </div>
@@ -124,6 +138,12 @@ export default function Home() {
               </div>
             ) : null}
 
+            {errorMessage ? (
+              <div className="mb-6 rounded-2xl border border-rose-200 bg-rose-50 px-4 py-3 text-sm font-medium text-rose-800">
+                {errorMessage}
+              </div>
+            ) : null}
+
             <Formik initialValues={initialValues} validationSchema={validationSchema} onSubmit={handleSubmit}>
               {({ values, setFieldValue, isSubmitting, touched, errors }) => (
                 <Form className="space-y-5">
@@ -136,7 +156,7 @@ export default function Home() {
                         id="fullName"
                         name="fullName"
                         type="text"
-                        placeholder="John Doe"
+                        placeholder="Enter your fullname"
                         className={`h-11 w-full rounded-xl border px-4 text-sm outline-none transition focus:border-blue-500 focus:ring-4 focus:ring-blue-100 ${
                           touched.fullName && errors.fullName ? "border-rose-400" : "border-slate-200"
                         }`}
@@ -203,14 +223,14 @@ export default function Home() {
                       </label>
                       <Field
                         id="whatsapp"
-                        name="whatsapp"
+                        name="phoneNumber"
                         type="tel"
                         placeholder="e.g., 234803..."
                         className={`h-11 w-full rounded-xl border px-4 text-sm outline-none transition focus:border-blue-500 focus:ring-4 focus:ring-blue-100 ${
-                          touched.whatsapp && errors.whatsapp ? "border-rose-400" : "border-slate-200"
+                          touched.phoneNumber && errors.phoneNumber ? "border-rose-400" : "border-slate-200"
                         }`}
                       />
-                      <InputError name="whatsapp" />
+                      <InputError name="phoneNumber" />
                     </div>
 
                     <div>
@@ -239,8 +259,8 @@ export default function Home() {
                     <p className="mb-3 text-sm font-semibold text-slate-900">Register Account As:</p>
                     <div className="grid grid-cols-2 rounded-2xl border border-slate-200 bg-slate-50 p-1">
                       {[
-                        { label: "Student Role", value: "student" as const },
-                        { label: "Course Representative Role", value: "representative" as const },
+                        { label: "Student", value: "student" as const },
+                        { label: "Course Representative", value: "representative" as const },
                       ].map((option) => {
                         const active = values.role === option.value;
 

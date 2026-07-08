@@ -13,7 +13,7 @@ const geistMono = Geist_Mono({
 });
 
 export const metadata: Metadata = {
-  title: "DMDAS",
+  title: "DMDAS | Digital Manual Distribution and Accountablity System",
   description: "Digital Manual Distribution and Accountablity System",
 };
 
