@@ -16,9 +16,10 @@ const transactionSchema = new mongoose.Schema({
         default: "pending"
     },
 
-    accountNumber: {
+    reference: {
         type: String,
-        required: true
+        required: true,
+        unique: true
     },
     
     amount: {

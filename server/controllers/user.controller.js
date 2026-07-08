@@ -1,6 +1,7 @@
 const User = require("../models/user.model");
 const bcrypt = require("bcrypt");
 const jwt = require("jsonwebtoken");
+const crypto = require("crypto");
 const Transaction = require("../models/transaction.model");
 
 const accountSid = `${process.env.TWILIO_ACCOUNT_SID}`;
@@ -236,90 +237,109 @@ const resetPinWithOTP = (req, res) => {
     });
 };
 
-const initiatePayment = async (req, res) => {
+const initializeTransaction = async (req, res) => {
   const payStackBaseURL = "https://api.paystack.co";
-
+  const { email, fullName, matricNumber } = req.user; // Get user info from the verified token
   const { amount, courseCode } = req.body;
-  const { matricNumber, email, fullName, phoneNumber } = req.user; // Get user info from the verified token
+
   if (!amount || !courseCode) {
-    return res.status(400).json({
-      message: "Amount and course code are required",
-    });
+    return res.status(400).json({ message: "Amount and courseCode are required." });
   }
 
   try {
-    const existingTx = await Transaction.findOne({
-      matricNumber,
-      courseCode,
-      status: { $in: ["approved", "pending"] },
-    });
-
-    if (existingTx) {
-      return res.status(400).json({
-        message:
-          "You have already initiated or completed payment for this course manual.",
-      });
-    }
-
-    const nameParts = fullName.split(" ");
-    const firstName = nameParts[0];
-    const lastName = nameParts.slice(1).join(" ");
-
-    const customerResponse = await fetch(`${payStackBaseURL}/customer`, {
+    // Initialize a transaction on Paystack
+    const transactionResponse = await fetch(`${payStackBaseURL}/transaction/initialize`, {
       method: "POST",
       headers: {
         Authorization: `Bearer ${process.env.PAYSTACK_SECRET_KEY}`,
         "Content-Type": "application/json",
       },
       body: JSON.stringify({
-        email,
-        firstName,
-        lastName,
-        phoneNumber,
+        email: email,
+        amount: amount * 100, // Paystack amount is in kobo
+        metadata: {
+          fullName: fullName,
+          matricNumber: matricNumber,
+          courseCode: courseCode,
+        },
       }),
     });
 
-    const responseData = await customerResponse.json();
-    return res.status(200).json(responseData);
+    const transactionData = await transactionResponse.json();
 
-    console.log(responseData);
+    if (!transactionResponse.ok || !transactionData.status || !transactionData.data.reference) {
+        console.error("Paystack Error initializing transaction:", transactionData);
+        return res.status(transactionResponse.status).json({ message: "Failed to initialize transaction.", details: transactionData.message });
+    }
 
-    // const customerCode = customerResult.data.customer_code;
-    // const accountResponse = await fetch(`${payStackBaseURL}/dedicated_account`, {
-    //   customer: customerCode,
-    //   preferredBank: process.env.NODE_ENV == "production" ? 'wema-bank': "test-bank"
-    // })
+    // Create a new transaction record in your database
+    const newTransaction = new Transaction({
+      user: req.user._id,
+      matricNumber: matricNumber,
+      amount: amount,
+      courseCode: courseCode,
+      reference: transactionData.data.reference,
+      status: 'pending',
+    });
 
-    // const paymentData = {
-    //     email, // Use the authenticated user's email
-    //     amount: amount * 100, // Paystack expects amount in kobo
-    //     metadata: {
-    //         matricNumber,
-    //         courseCode
-    //     }
-    // };
+    await newTransaction.save();
+    console.log(`Transaction pending for ${matricNumber} with reference ${transactionData.data.reference}`);
 
-    // const paystackResponse = await fetch(`${payStackBaseURL}/transaction/initialize`, {
-    //     method: "POST",
-    //     headers: {
-    //         Authorization: `Bearer ${process.env.PAYSTACK_SECRET_KEY}`,
-    //         "Content-Type": "application/json",
-    //     },
-    //     body: JSON.stringify(paymentData),
-    // });
-
-    // const responseData = await paystackResponse.json();
-
-    // if (!paystackResponse.ok) {
-    //     console.error("Paystack API Error:", responseData);
-    //     return res.status(paystackResponse.status).json({ message: "Payment initialization failed.", details: responseData.message });
-    // }
-
-    // return res.status(200).json(responseData);
+    return res.status(200).json(transactionData);
   } catch (error) {
-    console.error("Error during payment initiation:", error);
+    console.error("Error during transaction initialization:", error);
     return res.status(500).json({ message: "Internal Server Error" });
   }
+};
+
+
+const verifyTransaction = async (req, res) => {
+  const hash = crypto.createHmac('sha512', process.env.PAYSTACK_SECRET_KEY).update(JSON.stringify(req.body)).digest('hex');
+
+  if (hash !== req.headers['x-paystack-signature']) {
+    console.error("Webhook Error: Invalid signature");
+    return res.sendStatus(400); // Invalid signature
+  }
+
+  const event = req.body;
+
+  // Check for a successful charge event
+  if (event.event === 'charge.success') {
+    const reference = event.data.reference;
+
+    try {
+      // Find the transaction in your database
+      const transaction = await Transaction.findOne({ reference: reference });
+      if (!transaction) {
+        console.error(`Webhook Error: Transaction with reference ${reference} not found.`);
+        return res.sendStatus(404);
+      }
+
+      // Verify the transaction status with Paystack
+      const verifyResponse = await fetch(`https://api.paystack.co/transaction/verify/${reference}`, {
+        headers: {
+          Authorization: `Bearer ${process.env.PAYSTACK_SECRET_KEY}`,
+        },
+      });
+
+      const verificationData = await verifyResponse.json();
+
+      if (verificationData.data && verificationData.data.status === 'success') {
+        // Update transaction status to 'successful'
+        transaction.status = 'successful';
+        await transaction.save();
+        console.log(`Transaction ${reference} successfully verified and updated.`);
+      } else {
+        console.warn(`Webhook Warning: Transaction ${reference} verification failed or status not 'success'.`);
+      }
+    } catch (error) {
+      console.error(`Webhook Error processing reference ${reference}:`, error);
+      return res.sendStatus(500);
+    }
+  }
+
+  // Acknowledge receipt of the event
+  res.sendStatus(200);
 };
 
 module.exports = {
@@ -327,7 +347,8 @@ module.exports = {
   userSignin,
   requestPinReset,
   resetPinWithOTP,
-  initiatePayment,
+  initializeTransaction,
+  verifyTransaction,
 };
 // http://localhost:3142/api/changePin/6a2c1a43430f7641c6c48926
 
@@ -347,4 +368,7 @@ module.exports = {
 //   "courseCode": "CPE 304"
 // }
 
-// "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJtYXRyaWNOdW1iZXIiOiIyMDIyMDA3ODkwIiwiaWF0IjoxNzgzMjgxNDMyLCJleHAiOjE3ODMyODUwMzJ9.3H56bFjvZxg5PD0RF3Bmplj0Ep8lMfuFCH14PlK2HN4"
+// {
+//   "matricNumber": "2022007890",
+//   "pin": "2005"
+// }
