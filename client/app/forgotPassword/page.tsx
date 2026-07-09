@@ -1,10 +1,11 @@
 "use client";
 
 import axios from "axios";
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useState } from "react";
 import { ErrorMessage, Field, Form, Formik, type FormikHelpers } from "formik";
 import * as Yup from "yup";
 import { useRouter } from "next/navigation";
+import Link from "next/link";
 
 type ForgotPinValues = {
   matricNumber: string;
@@ -16,12 +17,31 @@ const initialValues: ForgotPinValues = {
   email: "",
 };
 
+type ResetPinValues = {
+  newPin: string;
+  confirmPin: string;
+};
+
+const resetInitialValues: ResetPinValues = {
+  newPin: "",
+  confirmPin: "",
+};
+
 const validationSchema = Yup.object({
   matricNumber: Yup.string().trim().required("Matric number is required"),
   email: Yup.string()
     .trim()
     .email("Enter a valid email")
     .required("Email is required"),
+});
+
+const resetValidationSchema = Yup.object({
+  newPin: Yup.string()
+    .matches(/^\d{4}$/, "PIN must be exactly 4 digits")
+    .required("New PIN is required"),
+  confirmPin: Yup.string()
+    .oneOf([Yup.ref("newPin")], "PINs must match")
+    .required("Confirm PIN is required"),
 });
 
 function InputError({ name }: { name: keyof ForgotPinValues }) {
@@ -34,11 +54,22 @@ function InputError({ name }: { name: keyof ForgotPinValues }) {
   );
 }
 
+function ResetInputError({ name }: { name: keyof ResetPinValues }) {
+  return (
+    <ErrorMessage
+      name={name}
+      component="p"
+      className="mt-1 text-xs font-medium text-[#ef4444]"
+    />
+  );
+}
+
 export default function ForgotPassword() {
   const router = useRouter();
-  const pinInputRefs = useRef<Array<HTMLInputElement | null>>([]);
   const [successMessage, setSuccessMessage] = useState<string | null>(null);
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
+  const [step, setStep] = useState<"request" | "reset">("request");
+  const [matricForReset, setMatricForReset] = useState<string>("");
 
   useEffect(() => {
     if (successMessage) {
@@ -54,7 +85,7 @@ export default function ForgotPassword() {
     }
   }, [errorMessage]);
 
-  const handleSubmit = async (
+  const handleRequestSubmit = async (
     values: ForgotPinValues,
     actions: FormikHelpers<ForgotPinValues>,
   ) => {
@@ -76,12 +107,47 @@ export default function ForgotPassword() {
       setSuccessMessage(
         response.data.message ?? "Request granted successfully.",
       );
+      setMatricForReset(values.matricNumber);
+      setStep("reset");
+    } catch (error) {
+      if (axios.isAxiosError(error)) {
+        setErrorMessage(
+          (error.response?.data as { message?: string } | undefined)?.message ??
+            error.message ??
+            "Unable to verify account.",
+        );
+      } else {
+        setErrorMessage(
+          error instanceof Error ? error.message : "Unable to verify account.",
+        );
+      }
+    } finally {
+      actions.setSubmitting(false);
+    }
+  };
 
-      console.log(response.data);
-      actions.resetForm();
-      pinInputRefs.current[0]?.focus();
+  const handleResetSubmit = async (
+    values: ResetPinValues,
+    actions: FormikHelpers<ResetPinValues>,
+  ) => {
+    setSuccessMessage(null);
+    setErrorMessage(null);
 
-      setTimeout(() => router.push(""), 1000);
+    const payload = {
+      matricNumber: matricForReset,
+      pin: values.newPin,
+    };
+
+    const baseURL = "http://localhost:5142";
+    try {
+      const response = await axios.post<{ message?: string }>(
+        `${baseURL}/api/resetPin`,
+        payload,
+      );
+
+      setSuccessMessage(response.data.message ?? "PIN changed successfully.");
+
+      setTimeout(() => router.push("/signin"), 2000);
     } catch (error) {
       if (axios.isAxiosError(error)) {
         setErrorMessage(
@@ -125,63 +191,158 @@ export default function ForgotPassword() {
               </div>
             ) : null}
 
-            <Formik initialValues={initialValues} validationSchema={validationSchema}onSubmit={handleSubmit}>
-              {({isSubmitting, touched, errors }) => (
-                <Form className="space-y-6">
-                  <div>
-                    <label
-                      className="mb-2 block text-sm font-semibold text-[#0b1324]"
-                      htmlFor="matricNumber"
-                    >
-                      Matric Number
-                    </label>
-                    <Field
-                      id="matricNumber"
-                      name="matricNumber"
-                      type="text"
-                      placeholder="e.g., 2021_0451"
-                      autoComplete="username"
-                      autoFocus
-                      className={`h-12 w-full rounded-xl border bg-white px-4 text-sm text-[#0b1324] outline-none transition placeholder:text-[#98a8bf] focus:border-[#2f68f6] focus:ring-4 focus:ring-[#dfeaff] ${
-                        touched.matricNumber && errors.matricNumber
-                          ? "border-rose-400"
-                          : "border-[#d8e2f1]"
-                      }`}
-                    />
-                    <InputError name="matricNumber" />
-                  </div>
+            {step === "request" ? (
+              <Formik
+                initialValues={initialValues}
+                validationSchema={validationSchema}
+                onSubmit={handleRequestSubmit}
+              >
+                {({ isSubmitting, touched, errors }) => (
+                  <Form className="space-y-6">
+                    <div>
+                      <label
+                        className="mb-2 block text-sm font-semibold text-[#0b1324]"
+                        htmlFor="matricNumber"
+                      >
+                        Matric Number
+                      </label>
+                      <Field
+                        id="matricNumber"
+                        name="matricNumber"
+                        type="text"
+                        placeholder="e.g., 2021_0451"
+                        autoComplete="username"
+                        autoFocus
+                        className={`h-12 w-full rounded-xl border bg-white px-4 text-sm text-[#0b1324] outline-none transition placeholder:text-[#98a8bf] focus:border-[#2f68f6] focus:ring-4 focus:ring-[#dfeaff] ${
+                          touched.matricNumber && errors.matricNumber
+                            ? "border-rose-400"
+                            : "border-[#d8e2f1]"
+                        }`}
+                      />
+                      <InputError name="matricNumber" />
+                    </div>
 
-                  <div>
-                    <label
-                      className="mb-3 block text-sm font-semibold text-[#0b1324]"
-                      htmlFor="pin-0"
-                    >
-                      Email
-                    </label>
-                    <Field
-                      id="email"
-                      name="email"
-                      type="email"
-                      placeholder="student@edu.ng"
-                      className={`h-11 w-full rounded-xl border px-4 text-sm outline-none transition focus:border-blue-500 focus:ring-4 focus:ring-blue-100 ${
-                        touched.email && errors.email
-                          ? "border-rose-400"
-                          : "border-slate-200"
-                      }`}
-                    />
-                    <InputError name="email" />
-                  </div>
+                    <div>
+                      <label
+                        className="mb-3 block text-sm font-semibold text-[#0b1324]"
+                        htmlFor="email"
+                      >
+                        Email
+                      </label>
+                      <Field
+                        id="email"
+                        name="email"
+                        type="email"
+                        placeholder="student@edu.ng"
+                        className={`h-11 w-full rounded-xl border px-4 text-sm outline-none transition focus:border-blue-500 focus:ring-4 focus:ring-blue-100 ${
+                          touched.email && errors.email
+                            ? "border-rose-400"
+                            : "border-slate-200"
+                        }`}
+                      />
+                      <InputError name="email" />
+                    </div>
 
-                  <button
-                    type="submit"
-                    disabled={isSubmitting}
-                    className="mt-2 flex h-12 w-full items-center justify-center rounded-xl bg-[#381E25] text-sm font-bold text-white transition hover:bg-[#F43F5E] disabled:cursor-not-allowed disabled:opacity-70"
-                  >
-                    {isSubmitting ? "Sending Reset Pin..." : "Request Pin"}
-                  </button>
-                </Form>
-              )}
-            </Formik>
+                    <button
+                      type="submit"
+                      disabled={isSubmitting}
+                      className="mt-2 flex h-12 w-full items-center justify-center rounded-xl bg-[#381E25] text-sm font-bold text-white transition hover:bg-[#F43F5E] disabled:cursor-not-allowed disabled:opacity-70"
+                    >
+                      {isSubmitting ? "Sending Reset Pin..." : "Request Pin"}
+                    </button>
+                  </Form>
+                )}
+              </Formik>
+            ) : (
+              <Formik
+                initialValues={resetInitialValues}
+                validationSchema={resetValidationSchema}
+                onSubmit={handleResetSubmit}
+              >
+                {({ isSubmitting, touched, errors }) => (
+                  <Form className="space-y-6">
+                    <div>
+                      <label
+                        className="mb-2 block text-sm font-semibold text-[#0b1324]"
+                        htmlFor="newPin"
+                      >
+                        OTP
+                      </label>
+                      <Field
+                        id="otp"
+                        name="otp"
+                        type="password"
+                        maxLength="6"
+                        autoFocus
+                        className={`h-12 w-full rounded-xl border bg-white px-4 text-sm text-[#0b1324] outline-none transition placeholder:text-[#98a8bf] focus:border-[#2f68f6] focus:ring-4 focus:ring-[#dfeaff] ${
+                          touched.newPin && errors.newPin
+                            ? "border-rose-400"
+                            : "border-[#d8e2f1]"
+                        }`}
+                      />
+                      <ResetInputError name="newPin" />
+                    </div>
+
+                    <div>
+                      <label
+                        className="mb-2 block text-sm font-semibold text-[#0b1324]"
+                        htmlFor="newPin"
+                      >
+                        New PIN
+                      </label>
+                      <Field
+                        id="newPin"
+                        name="newPin"
+                        type="password"
+                        maxLength="4"
+                        className={`h-12 w-full rounded-xl border bg-white px-4 text-sm text-[#0b1324] outline-none transition placeholder:text-[#98a8bf] focus:border-[#2f68f6] focus:ring-4 focus:ring-[#dfeaff] ${
+                          touched.newPin && errors.newPin
+                            ? "border-rose-400"
+                            : "border-[#d8e2f1]"
+                        }`}
+                      />
+                      <ResetInputError name="newPin" />
+                    </div>
+
+                    <div>
+                      <label
+                        className="mb-2 block text-sm font-semibold text-[#0b1324]"
+                        htmlFor="confirmPin"
+                      >
+                        Confirm PIN
+                      </label>
+                      <Field
+                        id="confirmPin"
+                        name="confirmPin"
+                        type="password"
+                        maxLength="4"
+                        className={`h-12 w-full rounded-xl border bg-white px-4 text-sm text-[#0b1324] outline-none transition placeholder:text-[#98a8bf] focus:border-[#2f68f6] focus:ring-4 focus:ring-[#dfeaff] ${
+                          touched.confirmPin && errors.confirmPin
+                            ? "border-rose-400"
+                            : "border-[#d8e2f1]"
+                        }`}
+                      />
+                      <ResetInputError name="confirmPin" />
+                    </div>
+
+                    <button
+                      type="submit"
+                      disabled={isSubmitting}
+                      className="mt-2 flex h-12 w-full items-center justify-center rounded-xl bg-[#381E25] text-sm font-bold text-white transition hover:bg-[#F43F5E] disabled:cursor-not-allowed disabled:opacity-70"
+                    >
+                      {isSubmitting ? "Changing PIN..." : "Change Password"}
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => setStep("request")}
+                      className="mt-2 flex h-12 w-full items-center justify-center rounded-xl bg-slate-200 text-sm font-bold text-slate-800 transition hover:bg-slate-300"
+                    >
+                      Back
+                    </button>
+                  </Form>
+                )}
+              </Formik>
+            )}
           </div>
         </section>
 

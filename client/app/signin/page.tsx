@@ -1,7 +1,7 @@
 "use client";
 
 import axios from "axios";
-import { useRef, useState } from "react";
+import { useRef, useState, useEffect } from "react";
 import { ErrorMessage, Field, Form, Formik, type FormikHelpers } from "formik";
 import * as Yup from "yup";
 import Link from "next/link";
@@ -35,10 +35,24 @@ function InputError({ name }: { name: keyof SigninValues }) {
 }
 
 export default function Signin() {
-	const router = useRouter()
+  const router = useRouter();
   const pinInputRefs = useRef<Array<HTMLInputElement | null>>([]);
   const [successMessage, setSuccessMessage] = useState<string | null>(null);
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
+
+  useEffect(() => {
+	if(successMessage){
+		const timer = setTimeout(() => setSuccessMessage(null), 3000);
+		return () => clearTimeout(timer);
+	}
+  }, [successMessage])
+
+  useEffect(()=> {
+	if(errorMessage){
+		const timer = setTimeout(()=> setErrorMessage(null), 300)
+		return () => clearTimeout(timer)
+	}
+  }, [errorMessage])
 
   const handleSubmit = async (
     values: SigninValues,
@@ -52,15 +66,20 @@ export default function Signin() {
       pin: values.pin,
     };
 
-    const baseURL = "http://localhost:5142"
+    const baseURL = "http://localhost:5142";
     try {
-      const response = await axios.post<{ message?: string }>(`${baseURL}/api/signin`, payload);
-      setSuccessMessage(response.data.message ?? "Access granted successfully.");
-	  console.log(response.data)
+      const response = await axios.post<{ message?: string }>(
+        `${baseURL}/api/signin`,
+        payload,
+      );
+      setSuccessMessage(
+        response.data.message ?? "Access granted successfully.",
+      );
+      console.log(response.data);
       actions.resetForm();
       pinInputRefs.current[0]?.focus();
 
-	  setTimeout(() => router.push(""), 1000)
+      setTimeout(() => router.push(""), 1000);
     } catch (error) {
       if (axios.isAxiosError(error)) {
         setErrorMessage(
@@ -221,8 +240,16 @@ export default function Signin() {
                     </div>
                     <InputError name="pin" />
                   </div>
-				  <p className="mt-2 text-sm text-[#F43F5E]"> Forgot password? <Link href="/forgotPassword" className="font-semibold hover:underline">Reset pin via whatsapp</Link>
-              </p>
+                  <p className="mt-2 text-sm text-[#F43F5E]">
+                    {" "}
+                    Forgot password?{" "}
+                    <Link
+                      href="/forgotPassword"
+                      className="font-semibold hover:underline"
+                    >
+                      Reset pin via whatsapp
+                    </Link>
+                  </p>
 
                   <button
                     type="submit"

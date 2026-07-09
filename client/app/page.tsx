@@ -168,7 +168,7 @@ export default function Home() {
                         id="email"
                         name="email"
                         type="email"
-                        placeholder="student@lautech.edu.ng"
+                        placeholder="student@edu.ng"
                         className={`h-11 w-full rounded-xl border px-4 text-sm outline-none transition focus:border-blue-500 focus:ring-4 focus:ring-blue-100 ${
                           touched.email && errors.email ? "border-rose-400" : "border-slate-200"
                         }`}

@@ -141,17 +141,15 @@ const requestPinReset = (req, res) => {
         });
       }
 
-      const generatedOTP = Math.floor(
-        100000 + Math.random() * 900000,
-      ).toString();
+      const generatedOTP = Math.floor(100000 + Math.random() * 900000).toString();
       const otpExpires = Date.now() + 600000; // OTP expires in 10 minutes
       const userPhoneNumber = user.phoneNumber;
-
+      console.log(userPhoneNumber);
+      
       user.pinResetOTP = generatedOTP;
       user.pinResetExpires = otpExpires;
 
-      user
-        .save()
+      user.save()
         .then(() => {
           // const userPhoneNumber = `+${user.phoneNumber}`;
           return client.messages.create({
