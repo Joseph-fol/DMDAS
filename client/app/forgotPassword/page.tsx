@@ -5,7 +5,6 @@ import { useEffect, useState } from "react";
 import { ErrorMessage, Field, Form, Formik, type FormikHelpers } from "formik";
 import * as Yup from "yup";
 import { useRouter } from "next/navigation";
-import Link from "next/link";
 
 type ForgotPinValues = {
   matricNumber: string;
@@ -18,11 +17,13 @@ const initialValues: ForgotPinValues = {
 };
 
 type ResetPinValues = {
+  otp: string;
   newPin: string;
   confirmPin: string;
 };
 
 const resetInitialValues: ResetPinValues = {
+  otp: "",
   newPin: "",
   confirmPin: "",
 };
@@ -36,12 +37,9 @@ const validationSchema = Yup.object({
 });
 
 const resetValidationSchema = Yup.object({
-  newPin: Yup.string()
-    .matches(/^\d{4}$/, "PIN must be exactly 4 digits")
-    .required("New PIN is required"),
-  confirmPin: Yup.string()
-    .oneOf([Yup.ref("newPin")], "PINs must match")
-    .required("Confirm PIN is required"),
+    otp: Yup.string().matches(/^\d{4}$/, "PIN must be exactly 4 digits").required("New PIN is required"),
+    newPin: Yup.string().matches(/^\d{4}$/, "PIN must be exactly 4 digits").required("New PIN is required"),
+    confirmPin: Yup.string().oneOf([Yup.ref("newPin")], "PINs must match").required("Confirm PIN is required"),
 });
 
 function InputError({ name }: { name: keyof ForgotPinValues }) {
@@ -69,7 +67,7 @@ export default function ForgotPassword() {
   const [successMessage, setSuccessMessage] = useState<string | null>(null);
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
   const [step, setStep] = useState<"request" | "reset">("request");
-  const [matricForReset, setMatricForReset] = useState<string>("");
+  const [matricForReset, setMatricForReset] = useState<string | null>(null);
 
   useEffect(() => {
     if (successMessage) {
@@ -134,8 +132,9 @@ export default function ForgotPassword() {
     setErrorMessage(null);
 
     const payload = {
-      matricNumber: matricForReset,
+      otp: values.otp,
       pin: values.newPin,
+      confirmPin: values.confirmPin,
     };
 
     const baseURL = "http://localhost:5142";
@@ -264,7 +263,7 @@ export default function ForgotPassword() {
                     <div>
                       <label
                         className="mb-2 block text-sm font-semibold text-[#0b1324]"
-                        htmlFor="newPin"
+                        htmlFor="otp"
                       >
                         OTP
                       </label>

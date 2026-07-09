@@ -179,9 +179,9 @@ const requestPinReset = (req, res) => {
 };
 
 const resetPinWithOTP = (req, res) => {
-  const { matricNumber, otp, newPin, confirmPin } = req.body;
+  const { otp, newPin, confirmPin } = req.body;
 
-  if (!matricNumber || !otp || !newPin || !confirmPin) {
+  if (!otp || !newPin || !confirmPin) {
     return res.status(400).json({ message: "All fields are required." });
   }
 
@@ -192,7 +192,6 @@ const resetPinWithOTP = (req, res) => {
   }
 
   User.findOne({
-    matricNumber,
     pinResetOTP: otp,
     pinResetExpires: { $gt: Date.now() }, // Check if OTP is not expired
   })
