@@ -1,7 +1,7 @@
 "use client";
 
 import axios from "axios";
-import { useRef, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { ErrorMessage, Field, Form, Formik, type FormikHelpers } from "formik";
 import * as Yup from "yup";
 import { useRouter } from "next/navigation";
@@ -40,6 +40,20 @@ export default function ForgotPassword() {
   const [successMessage, setSuccessMessage] = useState<string | null>(null);
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
 
+  useEffect(() => {
+    if (successMessage) {
+      const timer = setTimeout(() => setSuccessMessage(null), 3000);
+      return () => clearTimeout(timer);
+    }
+  }, [successMessage]);
+
+  useEffect(() => {
+    if (errorMessage) {
+      const timer = setTimeout(() => setErrorMessage(null), 3000);
+      return () => clearTimeout(timer);
+    }
+  }, [errorMessage]);
+
   const handleSubmit = async (
     values: ForgotPinValues,
     actions: FormikHelpers<ForgotPinValues>,
@@ -58,9 +72,11 @@ export default function ForgotPassword() {
         `${baseURL}/api/requestPin`,
         payload,
       );
+
       setSuccessMessage(
-        response.data.message ?? "Access granted successfully.",
+        response.data.message ?? "Request granted successfully.",
       );
+
       console.log(response.data);
       actions.resetForm();
       pinInputRefs.current[0]?.focus();
@@ -109,12 +125,8 @@ export default function ForgotPassword() {
               </div>
             ) : null}
 
-            <Formik
-              initialValues={initialValues}
-              validationSchema={validationSchema}
-              onSubmit={handleSubmit}
-            >
-              {({ values, setFieldValue, isSubmitting, touched, errors }) => (
+            <Formik initialValues={initialValues} validationSchema={validationSchema}onSubmit={handleSubmit}>
+              {({isSubmitting, touched, errors }) => (
                 <Form className="space-y-6">
                   <div>
                     <label
@@ -129,6 +141,7 @@ export default function ForgotPassword() {
                       type="text"
                       placeholder="e.g., 2021_0451"
                       autoComplete="username"
+                      autoFocus
                       className={`h-12 w-full rounded-xl border bg-white px-4 text-sm text-[#0b1324] outline-none transition placeholder:text-[#98a8bf] focus:border-[#2f68f6] focus:ring-4 focus:ring-[#dfeaff] ${
                         touched.matricNumber && errors.matricNumber
                           ? "border-rose-400"
@@ -149,7 +162,7 @@ export default function ForgotPassword() {
                       id="email"
                       name="email"
                       type="email"
-                      placeholder="student@lautech.edu.ng"
+                      placeholder="student@edu.ng"
                       className={`h-11 w-full rounded-xl border px-4 text-sm outline-none transition focus:border-blue-500 focus:ring-4 focus:ring-blue-100 ${
                         touched.email && errors.email
                           ? "border-rose-400"
@@ -164,7 +177,7 @@ export default function ForgotPassword() {
                     disabled={isSubmitting}
                     className="mt-2 flex h-12 w-full items-center justify-center rounded-xl bg-[#381E25] text-sm font-bold text-white transition hover:bg-[#F43F5E] disabled:cursor-not-allowed disabled:opacity-70"
                   >
-                    {isSubmitting ? "Verifying..." : "Verify Account"}
+                    {isSubmitting ? "Sending Reset Pin..." : "Request Pin"}
                   </button>
                 </Form>
               )}

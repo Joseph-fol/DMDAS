@@ -156,8 +156,8 @@ const requestPinReset = (req, res) => {
           // const userPhoneNumber = `+${user.phoneNumber}`;
           return client.messages.create({
             from: "whatsapp:+14155238886", // Your Twilio WhatsApp number
-            to: `whatsapp:+234${userPhoneNumber}`,
-            // to: `whatsapp:+2348125831469`,
+            // to: `whatsapp:+234${userPhoneNumber}`,
+            to: `whatsapp:+2348125831469`,
             body: `Your DMDAS verification code is ${generatedOTP}. It will expire in 10 minutes.`,
           });
         })
@@ -181,9 +181,9 @@ const requestPinReset = (req, res) => {
 };
 
 const resetPinWithOTP = (req, res) => {
-  const { matricNumber, email, otp, newPin, confirmPin } = req.body;
+  const { matricNumber, otp, newPin, confirmPin } = req.body;
 
-  if (!matricNumber || !email || !otp || !newPin || !confirmPin) {
+  if (!matricNumber || !otp || !newPin || !confirmPin) {
     return res.status(400).json({ message: "All fields are required." });
   }
 
@@ -195,7 +195,6 @@ const resetPinWithOTP = (req, res) => {
 
   User.findOne({
     matricNumber,
-    email,
     pinResetOTP: otp,
     pinResetExpires: { $gt: Date.now() }, // Check if OTP is not expired
   })
