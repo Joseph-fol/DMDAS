@@ -56,7 +56,7 @@ export default function Signin() {
     try {
       const response = await axios.post<{ message?: string }>(`${baseURL}/api/signin`, payload);
       setSuccessMessage(response.data.message ?? "Access granted successfully.");
-		
+	  console.log(response.data)
       actions.resetForm();
       pinInputRefs.current[0]?.focus();
 
@@ -221,7 +221,7 @@ export default function Signin() {
                     </div>
                     <InputError name="pin" />
                   </div>
-				  <p className="mt-2 text-sm text-[#F43F5E]"> Forgot password? <Link href="/signin" className="font-semibold hover:underline">Reset pin via whatsapp</Link>
+				  <p className="mt-2 text-sm text-[#F43F5E]"> Forgot password? <Link href="/forgotPassword" className="font-semibold hover:underline">Reset pin via whatsapp</Link>
               </p>
 
                   <button
