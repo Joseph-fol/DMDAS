@@ -4,6 +4,8 @@ import axios from "axios";
 import { useRef, useState } from "react";
 import { ErrorMessage, Field, Form, Formik, type FormikHelpers } from "formik";
 import * as Yup from "yup";
+import Link from "next/link";
+import { useRouter } from "next/navigation";
 
 type RegistrationValues = {
   fullName: string;
@@ -55,11 +57,10 @@ function InputError({ name }: { name: keyof RegistrationValues }) {
 }
 
 export default function Home() {
+  const router = useRouter();
   const pinInputRefs = useRef<Array<HTMLInputElement | null>>([]);
   const [successMessage, setSuccessMessage] = useState<string | null>(null);
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
-
-  // const navigate = 
 
   const handleSubmit = async ( values: RegistrationValues, actions: FormikHelpers<RegistrationValues>,) =>{
     setSuccessMessage(null);
@@ -67,18 +68,13 @@ export default function Home() {
 
     const payload = {...values, whatsapp: values.phoneNumber,};
     console.log("Registration payload:", payload);
-
     const baseURL = "http://localhost:5142"
-
     try {
       const response = await axios.post<{ message?: string }>(`${baseURL}/api/signup`, payload);
       const data = response.data;
 
       setSuccessMessage(data.message ?? "Registration request received successfully.");
-      // window.location.href = "signin"
-      actions.resetForm();
-      
-      pinInputRefs.current[0]?.focus();
+      setTimeout(() => router.push("/signin"), 1000);
     } catch (error) {
       if (axios.isAxiosError(error)) {
         setErrorMessage(
@@ -128,7 +124,7 @@ export default function Home() {
             <div className="mb-8">
               <h2 className="text-3xl font-black tracking-tight text-slate-950">Create DMDAS Account</h2>
               <p className="mt-2 text-sm text-[#F43F5E]">
-                Already registered? <a href="#" className="font-semibold hover:underline">Login</a>
+                Already registered? <Link href="/signin" className="font-semibold hover:underline">Login</Link>
               </p>
             </div>
 
