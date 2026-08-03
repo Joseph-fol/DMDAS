@@ -176,11 +176,160 @@ const resetPinWithOTP = async (req, res) => {
 
     await user.save();
     res.status(200).json({ message: "Your PIN has been successfully reset." });
-    
+
   } catch (error) {
     console.error("Error during resetPinWithOTP:", error);
     res.status(500).json({ message: "Internal Server Error" });
   }
+};
+
+const resetPasswordSetting = async (req, res) => {
+  const matricNumber = req.user.matricNumber
+  const { currentPin, newPin, confirmNewPin } = req.body
+
+  if (!currentPin || !newPin || !confirmNewPin) {
+    return res.status(400).json({
+      message: "All input fields are required"
+    })
+  }
+
+  if (newPin !== confirmNewPin) {
+    return res.status(400).json({ message: "New PIN and confirm PIN do not match." });
+  }
+
+  try {
+    // Fetch the full user document including the pin
+    const userDetails = await User.findOne({ matricNumber })
+
+    const isMatch = await bcrypt.compare(currentPin, userDetails.pin)
+    if (!isMatch) {
+      console.log("Current pin does not match the original pin")
+      return res.status(404).json({
+        status: false,
+        message: "Current pin does not correlate with the original pin"
+      })
+    }
+
+    const salt = await bcrypt.genSalt(10);
+    userDetails.pin = await bcrypt.hash(newPin, salt);
+
+    userDetails.pinResetOTP = undefined;
+    userDetails.pinResetExpires = undefined;
+
+    await userDetails.save();
+    res.status(200).json({ message: "PIN has been reset successfully." });
+  } catch (error) {
+    console.log("Error during resetPasswordSetting", error)
+    res.status(500).json({
+      message: "Internal Server Error",
+      details: "Failed to retrieve user pin"
+    })
+  }
+}
+
+const initializeTransaction = async (req, res) => {
+  const payStackBaseURL = "https://api.paystack.co";
+  const { email, fullName, matricNumber } = req.user; // Get user info from the verified token
+  const { amount, courseCode } = req.body;
+
+  if (!amount || !courseCode) {
+    return res.status(400).json({ message: "Amount and courseCode are required." });
+  }
+
+  try {
+    // Initialize a transaction on Paystack
+    const transactionResponse = await fetch(`${payStackBaseURL}/transaction/initialize`, {
+      method: "POST",
+      headers: {
+        Authorization: `Bearer ${process.env.PAYSTACK_SECRET_KEY}`,
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify({
+        email: email,
+        amount: amount * 100, // Paystack amount is in kobo
+        metadata: {
+          fullName: fullName,
+          matricNumber: matricNumber,
+          courseCode: courseCode,
+        },
+      }),
+    });
+
+    const transactionData = await transactionResponse.json();
+
+    if (!transactionResponse.ok || !transactionData.status || !transactionData.data.reference) {
+      console.error("Paystack Error initializing transaction:", transactionData);
+      return res.status(transactionResponse.status).json({ message: "Failed to initialize transaction.", details: transactionData.message });
+    }
+
+    // Create a new transaction record in your database
+    const newTransaction = new Transaction({
+      user: req.user._id,
+      matricNumber: matricNumber,
+      amount: amount,
+      courseCode: courseCode,
+      reference: transactionData.data.reference,
+      status: 'pending',
+    });
+
+    await newTransaction.save();
+    console.log(`Transaction pending for ${matricNumber} with reference ${transactionData.data.reference}`);
+
+    return res.status(200).json(transactionData);
+  } catch (error) {
+    console.error("Error during transaction initialization:", error);
+    return res.status(500).json({ message: "Internal Server Error" });
+  }
+};
+
+const verifyTransaction = async (req, res) => {
+  const hash = crypto.createHmac('sha512', process.env.PAYSTACK_SECRET_KEY).update(JSON.stringify(req.body)).digest('hex');
+
+  if (hash !== req.headers['x-paystack-signature']) {
+    console.error("Webhook Error: Invalid signature");
+    return res.sendStatus(400); // Invalid signature
+  }
+
+  const event = req.body;
+
+  // Check for a successful charge event
+  if (event.event === 'charge.success') {
+    const reference = event.data.reference;
+
+    try {
+      // Find the transaction in your database
+      const transaction = await Transaction.findOne({ reference: reference });
+      if (!transaction) {
+        console.error(`Webhook Error: Transaction with reference ${reference} not found.`);
+        return res.sendStatus(404);
+      }
+
+      // Verify the transaction status with Paystack
+      const verifyResponse = await fetch(`https://api.paystack.co/transaction/verify/${reference}`, {
+        headers: {
+          Authorization: `Bearer ${process.env.PAYSTACK_SECRET_KEY}`,
+        },
+      });
+
+      const verificationData = await verifyResponse.json();
+
+      if (verificationData.data && verificationData.data.status === 'success') {
+        // Update transaction status to 'successful'
+        transaction.status = 'successful';
+        await transaction.save();
+
+        console.log(`Transaction ${reference} successfully verified and updated.`);
+      } else {
+        console.warn(`Webhook Warning: Transaction ${reference} verification failed or status not 'success'.`);
+      }
+    } catch (error) {
+      console.error(`Webhook Error processing reference ${reference}:`, error);
+      return res.sendStatus(500);
+    }
+  }
+
+  // Acknowledge receipt of the event
+  res.sendStatus(200);
 };
 
 // const createVirtualAccount = async (req, res) => {
@@ -219,11 +368,11 @@ const getUserProfile = async (req, res) => {
 };
 
 const addManual = async (req, res) => {
-  const { courseCode, courseTitle, price, quantity } = req.body;
+  const { courseCode, courseTitle, price, quantity, semester } = req.body;
   // The logged-in user's ID is attached to the request by the verifyToken middleware
   const repId = req.user._id;
 
-  if (!courseCode || !courseTitle || !price || !quantity) {
+  if (!courseCode || !courseTitle || !price || !quantity || !semester) {
     return res.status(400).json({
       message: "All manual fields are required."
     });
@@ -235,6 +384,7 @@ const addManual = async (req, res) => {
       courseTitle,
       price,
       quantity,
+      semester,
       addedBy: repId, // Associate the manual with the rep
     });
 
@@ -254,20 +404,113 @@ const addManual = async (req, res) => {
   }
 };
 
+const editManual = async (req, res) => {
+  const { id } = req.params
+  const repEmail = req.user.email
+  const { courseCode, courseTitle, price, quantity, semester } = req.body;
+
+  if (!courseCode || !courseTitle || !price || !quantity || !semester) {
+    return res.status(400).json({
+      message: "All manual input fields are required."
+    });
+  }
+
+  try {
+    const user = await User.findById(id)
+    if (!user) {
+      return res.status(404).json({
+        message: "User not found"
+      })
+    }
+
+    if (!repEmail) {
+      return res.status(403).json({
+        message: "You can only update your own questions",
+        detail: "This question was created by another admin"
+      })
+    }
+
+    const userCorrection = {
+      courseCode,
+      courseTitle,
+      price,
+      quantity,
+      semester,
+      addedBy: user._id,
+    }
+
+    const editedManual = AddManual.findByIdAndUpdate(id, userCorrection, { new: true })
+    if (!editedManual) {
+      return res.status(404).json({
+        message: "Question not found"
+      })
+    }
+
+    res.status(200).json({
+      message: "Manual successfully updated.",
+    })
+  } catch (error) {
+    console.log("Error editing manual")
+    return res.status(500).json({
+      message: "Failed to update manual",
+      error: error.message
+    })
+  }
+}
+
+const deleteManual = async (req, res) => {
+  const { id } = req.params
+  const repEmail = req.user.email
+
+  try {
+    const user = await User.findById(id)
+    if (!user) {
+      return res.status(404).json({
+        message: "User not found"
+      })
+    }
+
+    if (!repEmail) {
+      return res.status(403).json({
+        message: "You can only delete your own questions",
+        detail: "This question was created by another admin"
+      })
+    }
+
+    const deletedManual = AddManual.findByIdAndDelete(id)
+    if (deletedManual) {
+      return res.status(404).json({
+        message: "Question not found"
+      })
+    }
+
+    res.status(200).json({
+      message: "Manual successfully deleted.",
+    })
+
+  } catch (error) {
+    console.log("Error editing manual")
+    return res.status(500).json({
+      message: "Failed to update manual",
+      error: error.message
+    })
+  }
+}
+
 const getRepManuals = async (req, res) => {
   try {
     const manuals = await AddManual.find({ addedBy: req.user._id }).populate('addedBy', 'fullName email phoneNumber');
     if (manuals.length === 0) {
       console.log("No manuals found for this representative.");
       return res.status(200).json(
-        { 
+        {
           status: false,
           message: "No manuals found for this representative.",
-          manuals: [] 
+          manuals: []
         },
       );
     }
-    
+
     console.log("Rep manuals fetched successfully");
     return res.status(200).json({ manuals });
 
@@ -277,16 +520,27 @@ const getRepManuals = async (req, res) => {
   }
 }
 
+const validateToken = async (req, res) => {
+  const { token } = req.body
+  if (!token) {
+    return res.status(400).json({
+      message: "Input field is required"
+    })
+  }
+}
+
 module.exports = {
   userSignup,
   userSignin,
   requestPinReset,
   resetPinWithOTP,
-  // initializeTransaction,
-  // verifyTransaction,
+  initializeTransaction,
+  verifyTransaction,
   getUserProfile,
   addManual,
-  getRepManuals
+  getRepManuals,
+  resetPasswordSetting,
+  editManual
 };
 // http://localhost:3142/api/changePin/6a2c1a43430f7641c6c48926
 

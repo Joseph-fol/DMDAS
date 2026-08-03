@@ -18,6 +18,10 @@ const manualSchema = new mongoose.Schema({
         type: Number,
         required: true,
     },
+    semester: {
+        type: String,
+        required: true
+    },
     addedBy: {
         type: mongoose.Schema.Types.ObjectId,
         ref: 'User',

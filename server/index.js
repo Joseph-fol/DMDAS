@@ -32,6 +32,15 @@ mongoose.connect(URI)
 
 app.use("/api", checkInternetConnection, userRoute);
 
+// Error handling middleware for JSON parsing errors
+app.use((err, req, res, next) => {
+  if (err instanceof SyntaxError && err.status === 400 && 'body' in err) {
+    console.error('Bad JSON payload:', err.message);
+    return res.status(400).json({ message: 'Bad Request: Invalid JSON payload' });
+  }
+  next(); // Pass other errors to the next error handler
+});
+
 app.use((req, res) => {
   res.status(404).json({
     error: "Route not found",

@@ -27,8 +27,7 @@ const verifyToken = async (req, res, next) => {
         req.user = user;
         next();
     } catch (error) {
-        console.error("Token verification error:", error.message);
-
+        console.error("Token verification error:", error.message)
         if (error.name === 'JsonWebTokenError') {
             return res.status(401).json({ status: false, message: "Authentication failed. The token is invalid or has been altered." });
         }
