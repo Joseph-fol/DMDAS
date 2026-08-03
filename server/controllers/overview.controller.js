@@ -18,9 +18,18 @@ const getStudentOverview = async (req, res) => {
     const [purchasedCount, availableCount, recentAcquisitions] = await Promise.all([
         // Count of total purchased manual by the student
         Transaction.countDocuments({
+            student: studentId,
+            status: 'paid'
+        }),
+
+        // Count total available manuals matching student's level & department
+        AddManual.countDocuments({
             level: studentProfile.level,
             department: studentProfile.department,
-            status: 'successful'
-        })
+            isAvailable: true
+        }),
+
+        Transaction.find({ student: studentId, paymentStatus: 'PAID' })
+        .sort({ createdAt: -1 }).limit(5).select('courseCode claimToken createdAt paymentStatus dispatchStatus').lean()
     ])
 }
