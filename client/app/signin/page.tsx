@@ -41,18 +41,18 @@ export default function Signin() {
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
 
   useEffect(() => {
-	if(successMessage){
-		const timer = setTimeout(() => setSuccessMessage(null), 3000);
-		return () => clearTimeout(timer);
-	}
-  }, [successMessage])
+    if (successMessage) {
+      const timer = setTimeout(() => setSuccessMessage(null), 4000);
+      return () => clearTimeout(timer);
+    }
+  }, [successMessage]);
 
-  useEffect(()=> {
-	if(errorMessage){
-		const timer = setTimeout(()=> setErrorMessage(null), 300)
-		return () => clearTimeout(timer)
-	}
-  }, [errorMessage])
+  useEffect(() => {
+    if (errorMessage) {
+      const timer = setTimeout(() => setErrorMessage(null), 4000);
+      return () => clearTimeout(timer);
+    }
+  }, [errorMessage]);
 
   const handleSubmit = async (
     values: SigninValues,
@@ -68,18 +68,24 @@ export default function Signin() {
 
     const baseURL = "http://localhost:5142";
     try {
-      const response = await axios.post<{ message?: string }>(
-        `${baseURL}/api/signin`,
-        payload,
-      );
+      const response = await axios.post<{ message?: string, token?: string }>(`${baseURL}/api/signin`, payload );
       setSuccessMessage(
         response.data.message ?? "Access granted successfully.",
       );
-      console.log(response.data);
+      const userData = response.data;
+      
       actions.resetForm();
       pinInputRefs.current[0]?.focus();
 
-      setTimeout(() => router.push(""), 1000);
+      if (userData.token) {
+        sessionStorage.setItem("token", userData.token);
+      }
+
+      if (userData) {
+        sessionStorage.setItem("Student", JSON.stringify(userData));
+      }
+
+      setTimeout(() => router.push("/student/studentDashboard"), 1000);
     } catch (error) {
       if (axios.isAxiosError(error)) {
         setErrorMessage(
@@ -256,7 +262,7 @@ export default function Signin() {
                     disabled={isSubmitting}
                     className="mt-2 flex h-12 w-full items-center justify-center rounded-xl bg-[#381E25] text-sm font-bold text-white transition hover:bg-[#F43F5E] disabled:cursor-not-allowed disabled:opacity-70"
                   >
-                    {isSubmitting ? "Verifying..." : "Verify Account"}
+                    {isSubmitting ? "Signining..." : "Initialize Signin"}
                   </button>
                 </Form>
               )}

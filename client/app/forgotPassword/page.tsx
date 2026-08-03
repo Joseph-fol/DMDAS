@@ -17,27 +17,27 @@ const initialValues: ForgotPinValues = {
 };
 
 type ResetPinValues = {
+  matricNumber: string;
   otp: string;
   newPin: string;
   confirmPin: string;
 };
 
 const resetInitialValues: ResetPinValues = {
+  matricNumber: "",
   otp: "",
   newPin: "",
   confirmPin: "",
 };
 
 const validationSchema = Yup.object({
-  matricNumber: Yup.string().trim().required("Matric number is required"),
-  email: Yup.string()
-    .trim()
-    .email("Enter a valid email")
-    .required("Email is required"),
+  matricNumber: Yup.string().trim().matches(/^[A-Za-z0-9_-]+$/, "Use letters, numbers, hyphen or underscore only").required("Matric number is required"),
+  email: Yup.string().trim().email("Enter a valid email").required("Email is required"),
 });
 
 const resetValidationSchema = Yup.object({
-    otp: Yup.string().matches(/^\d{4}$/, "PIN must be exactly 4 digits").required("New PIN is required"),
+    matricNumber: Yup.string().trim().matches(/^[A-Za-z0-9_-]+$/, "Use letters, numbers, hyphen or underscore only").required("Matric number is required"),
+    otp: Yup.string().matches(/^\d{6}$/, "PIN must be exactly 6 digits").required("OTP is required"),
     newPin: Yup.string().matches(/^\d{4}$/, "PIN must be exactly 4 digits").required("New PIN is required"),
     confirmPin: Yup.string().oneOf([Yup.ref("newPin")], "PINs must match").required("Confirm PIN is required"),
 });
@@ -71,22 +71,19 @@ export default function ForgotPassword() {
 
   useEffect(() => {
     if (successMessage) {
-      const timer = setTimeout(() => setSuccessMessage(null), 3000);
+      const timer = setTimeout(() => setSuccessMessage(null), 4000);
       return () => clearTimeout(timer);
     }
   }, [successMessage]);
 
   useEffect(() => {
     if (errorMessage) {
-      const timer = setTimeout(() => setErrorMessage(null), 3000);
+      const timer = setTimeout(() => setErrorMessage(null), 4000);
       return () => clearTimeout(timer);
     }
   }, [errorMessage]);
 
-  const handleRequestSubmit = async (
-    values: ForgotPinValues,
-    actions: FormikHelpers<ForgotPinValues>,
-  ) => {
+  const handleRequestSubmit = async ( values: ForgotPinValues, actions: FormikHelpers<ForgotPinValues> ) => {
     setSuccessMessage(null);
     setErrorMessage(null);
 
@@ -131,22 +128,24 @@ export default function ForgotPassword() {
     setSuccessMessage(null);
     setErrorMessage(null);
 
-    const payload = {
+    const resetPayload = {
+      matricNumber: matricForReset,
       otp: values.otp,
-      pin: values.newPin,
+      newPin: values.newPin,
       confirmPin: values.confirmPin,
     };
+
+    // console.log("Reset PIN payload:", resetPayload);
 
     const baseURL = "http://localhost:5142";
     try {
       const response = await axios.post<{ message?: string }>(
-        `${baseURL}/api/resetPin`,
-        payload,
+        `${baseURL}/api/resetPin`, resetPayload,
       );
 
       setSuccessMessage(response.data.message ?? "PIN changed successfully.");
-
       setTimeout(() => router.push("/signin"), 2000);
+
     } catch (error) {
       if (axios.isAxiosError(error)) {
         setErrorMessage(
@@ -210,8 +209,7 @@ export default function ForgotPassword() {
                         name="matricNumber"
                         type="text"
                         placeholder="e.g., 2021_0451"
-                        autoComplete="username"
-                        autoFocus
+                        autoComplete="off"
                         className={`h-12 w-full rounded-xl border bg-white px-4 text-sm text-[#0b1324] outline-none transition placeholder:text-[#98a8bf] focus:border-[#2f68f6] focus:ring-4 focus:ring-[#dfeaff] ${
                           touched.matricNumber && errors.matricNumber
                             ? "border-rose-400"
@@ -254,12 +252,35 @@ export default function ForgotPassword() {
               </Formik>
             ) : (
               <Formik
-                initialValues={resetInitialValues}
+                initialValues={{ ...resetInitialValues, matricNumber: matricForReset ?? "" }}
                 validationSchema={resetValidationSchema}
                 onSubmit={handleResetSubmit}
               >
                 {({ isSubmitting, touched, errors }) => (
                   <Form className="space-y-6">
+                    <div>
+                      <label
+                        className="mb-2 block text-sm font-semibold text-[#0b1324]"
+                        htmlFor="matricNumber"
+                      >
+                        Matric Number
+                      </label>
+                      <Field
+                        id="matricNumber"
+                        name="matricNumber"
+                        type="text"
+                        placeholder="e.g., 2021_0451"
+                        autoComplete="username"
+                        autoFocus
+                        className={`h-12 w-full rounded-xl border bg-white px-4 text-sm text-[#0b1324] outline-none transition placeholder:text-[#98a8bf] focus:border-[#2f68f6] focus:ring-4 focus:ring-[#dfeaff] ${
+                          touched.matricNumber && errors.matricNumber
+                            ? "border-rose-400"
+                            : "border-[#d8e2f1]"
+                        }`}
+                      />
+                      <ResetInputError name="matricNumber" />
+                    </div>
+
                     <div>
                       <label
                         className="mb-2 block text-sm font-semibold text-[#0b1324]"
@@ -279,7 +300,7 @@ export default function ForgotPassword() {
                             : "border-[#d8e2f1]"
                         }`}
                       />
-                      <ResetInputError name="newPin" />
+                      <ResetInputError name="otp" />
                     </div>
 
                     <div>
