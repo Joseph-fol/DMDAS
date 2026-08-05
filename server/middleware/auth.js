@@ -49,4 +49,16 @@ const isRep = (req, res, next) => {
     }
 };
 
-module.exports = { verifyToken, isRep };
+const isStudent = (req, res, next) =>{
+    if(req.user && req.user.role == "student"){
+        next()
+    } else {
+        return res.status(403).json({
+            statuse: false,
+            message: "Only student can perform this task"
+        })
+    }
+
+}
+
+module.exports = { verifyToken, isRep, isStudent };

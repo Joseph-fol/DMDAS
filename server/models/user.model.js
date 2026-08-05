@@ -20,15 +20,24 @@ let userSchema = mongoose.Schema({
         trim: true,
         uppercase: true
     },
+
+    insitution: {
+        type: String,
+        default: "LAUTECH"
+    },
+
     department: {
         type: String,
         required: [true, "Department is required"],
         trim: true
     },
+
     phoneNumber: {
         type: String,
         required: [true, "Phone number is required"],
-        trim: true
+        trim: true,
+        max: 11,
+        min: 11
     },
     level: {
         type: String,
@@ -43,16 +52,40 @@ let userSchema = mongoose.Schema({
     },
     role: {
         type: String,
-        enum: ["rep", "student"],
+        enum: ["rep", "student", "superRep"],
         default: "student",
-        required: true
+        required: true,
+        index: true
     },
+    superRepPasscode: {
+        type: String,
+        default: null
+    },
+
+    settlementAccount: {
+        accountNumber: {
+            type: String,
+            default: null
+        },
+        bankName: {
+            type: String,
+            default: null
+        }
+    },
+
     pinResetOTP: {
         type: String
     },
     pinResetExpires: {
         type: Date
-    }
+    },
 }, { timestamps: true })
+
+userSchema.index(
+    { department: 1, level: 1, role: 1 },
+    { unique: true, partialFilterExpression: {
+        role: "superRep"
+    }}
+)
 
 module.exports = mongoose.model("User", userSchema)

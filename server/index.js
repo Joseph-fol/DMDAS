@@ -30,17 +30,19 @@ mongoose.connect(URI)
     console.log("Server did not start due to MongoDB connection failure.");
   });
 
+// Mount the API routes before the error handlers
 app.use("/api", checkInternetConnection, userRoute);
 
 // Error handling middleware for JSON parsing errors
 app.use((err, req, res, next) => {
   if (err instanceof SyntaxError && err.status === 400 && 'body' in err) {
     console.error('Bad JSON payload:', err.message);
-    return res.status(400).json({ message: 'Bad Request: Invalid JSON payload' });
+    return res.status(400).json({ message: 'Bad Request: Invalid JSON in payload' });
   }
   next(); // Pass other errors to the next error handler
 });
 
+// Catch-all 404 handler for any request that doesn't match a route
 app.use((req, res) => {
   res.status(404).json({
     error: "Route not found",
