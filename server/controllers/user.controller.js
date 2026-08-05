@@ -33,13 +33,16 @@ const userSignup = async (req, res) => {
     const salt = await bcrypt.genSalt(10);
     const hashedPin = await bcrypt.hash(pin, salt);
 
+    // Sanitize the level input to store only the numeric part (e.g., "400" from "400level")
+    const sanitizedLevel = level.match(/\d+/)?.[0] || level;
+
     const newUserInformation = new User({
       fullName,
       email,
       matricNumber,
       department,
       phoneNumber,
-      level,
+      level: sanitizedLevel,
       pin: hashedPin,
       role: role === "rep" ? "rep" : "student",
     });
@@ -355,7 +358,6 @@ const deleteManual = async (req, res) => {
   const repId = req.user._id
 
   try {
-    // Find the manual by its ID first
     const manual = await AddManual.findById(id);
     if (!manual) {
       return res.status(404).json({
@@ -395,7 +397,7 @@ const getRepManuals = async (req, res) => {
           status: false,
           message: "No manuals found for this representative.",
           manuals: []
-        },ZZ
+        },
       );
     }
 

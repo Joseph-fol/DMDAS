@@ -13,7 +13,7 @@ router.post("/resetPin", resetPinWithOTP)
 router.get("/profile", verifyToken, (req, res) => {
     res.status(200).json({ user: req.user });
 });
-router.post("/updatePinSetting", verifyToken, resetPasswordSetting)
+router.put("/updatePinSetting", verifyToken, resetPasswordSetting)
 router.post("/initializeTransaction", verifyToken, initializeTransaction)
 router.post("/paystack/webhook", verifyTransaction)
 router.get("/admin/dashboard", verifyToken, isRep, (req, res) => {
