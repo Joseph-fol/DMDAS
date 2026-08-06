@@ -410,6 +410,53 @@ const getRepManuals = async (req, res) => {
   }
 }
 
+const searchManual = async (req, res) => {
+  try {
+
+
+    const { q, courseTitle, courseCode } = req.body
+    const { department } = req.user
+
+    // Based query scope to each department
+    let query = { department }
+
+    if (q && q.trim().length > 0) {
+      const searchTerm = q.trim();
+
+      if (searchTerm.length >= 3) {
+        query.$text = { $search: searchTerm }
+      }
+    } else {
+      const prefixRegex = new RegExp(`^${searchTerm}`, "i")
+      query.$or = [
+        { courseCode: prefixRegex },
+        { courseTitle: prefixRegex }
+      ];
+    }
+
+    //Optional filters (i.e Harmattan/Rain semester)
+    if (semester) {
+      query.semester = semester
+    }
+
+    const manuals = await AddManual.find(query)
+      .select("courseCode courseTitle semester price printedStock availableStock isAvailable")
+      .sort({ courseCode: 1 }).lean()
+
+    return res.status(200).json({
+      success: true,
+      count: manuals.length,
+      data: manuals
+    })
+  } catch (error) {
+    console.error("[Manual search error]", error.message)
+    return res.status(500).json({
+      success: false,
+      message: "Failed to search manual inventory"
+    })
+  }
+}
+
 const validateToken = async (req, res) => {
   const { token } = req.body
   if (!token) {

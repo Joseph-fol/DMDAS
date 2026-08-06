@@ -33,7 +33,7 @@ export default function DashboardNavbar({ isSidebarOpen, setIsSidebarOpen }: Das
           )}
         </button>
 
-        <label className="flex min-w-0 flex-1 items-center gap-3 rounded-2xl border border-slate-200 bg-slate-50 px-4 py-2.5 text-slate-500 transition focus-within:border-slate-300 focus-within:bg-white focus-within:ring-4 focus-within:ring-slate-100">
+        {/* <label className="flex min-w-0 flex-1 items-center gap-3 rounded-2xl border border-slate-200 bg-slate-50 px-4 py-2.5 text-slate-500 transition focus-within:border-slate-300 focus-within:bg-white focus-within:ring-4 focus-within:ring-slate-100">
           <svg
             viewBox="0 0 24 24"
             fill="none"
@@ -56,7 +56,7 @@ export default function DashboardNavbar({ isSidebarOpen, setIsSidebarOpen }: Das
           <span className="inline-flex h-7 items-center rounded-lg border border-slate-200 bg-white px-2.5 text-[11px] font-semibold tracking-wide text-slate-500 shadow-sm">
             ⌘K
           </span>
-        </label>
+        </label> */}
 
         <div className="flex flex-none items-center gap-2 sm:gap-3">
           <button

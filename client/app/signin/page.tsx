@@ -68,12 +68,15 @@ export default function Signin() {
 
     const baseURL = "http://localhost:5142";
     try {
-      const response = await axios.post<{ message?: string, token?: string }>(`${baseURL}/api/signin`, payload );
+      const response = await axios.post<{ message?: string; token?: string }>(
+        `${baseURL}/api/signin`,
+        payload,
+      );
       setSuccessMessage(
         response.data.message ?? "Access granted successfully.",
       );
       const userData = response.data;
-      
+
       actions.resetForm();
       pinInputRefs.current[0]?.focus();
 
@@ -148,6 +151,14 @@ export default function Signin() {
               </h2>
               <p className="mt-2 text-sm text-[#5d7597]">
                 Enter your credentials to continue.
+              </p>
+
+              <p className="mt-2 text-sm text-[#F43F5E]">
+                {" "}
+                Do not have account yet?{" "}
+                <Link href="/" className="font-semibold hover:underline">
+                  Signup
+                </Link>
               </p>
             </div>
 

@@ -33,9 +33,9 @@ const initialValues: RegistrationValues = {
   fullName: "",
   email: "",
   matricNumber: "",
-  department: departments[0],
+  department: "",
   phoneNumber: "",
-  level: "100",
+  level: "",
   role: "student",
   pin: "",
 };
@@ -204,6 +204,7 @@ export default function Home() {
                           touched.department && errors.department ? "border-rose-400" : "border-slate-200"
                         }`}
                       >
+                        <option value="" disabled hidden>Select Option</option>
                         {departments.map((department) => (
                           <option key={department} value={department}>
                             {department}
@@ -241,6 +242,7 @@ export default function Home() {
                           touched.level && errors.level ? "border-rose-400" : "border-slate-200"
                         }`}
                       >
+                        <option value="" disabled hidden>Select Option</option>
                         {levels.map((level) => (
                           <option key={level} value={level}>
                             {level}
