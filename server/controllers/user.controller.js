@@ -514,18 +514,17 @@ const searchManual = async (req, res) => {
   }
 };
 
-const addAccountDetail = async (req, res) => {
+const resolveAccountDetail = async (req, res) => {
   const { accountNumber, bankName } = req.body;
 
   if (!accountNumber || !bankName) {
-    return res.status(400).json({ message: "Account number and bank name are required." });
+    return res.status(400).json({
+      message: "Account number and bank name are required."
+    });
   }
 
-  try {
-    // 1. Fetch all available banks using the reusable helper function
+  try { 
     const banksData = await fetchPaystackBanks();
-
-    // 2. Find the bank code corresponding to the provided bank name
     const bank = banksData.find(b => b.name.toLowerCase() === bankName.toLowerCase());
 
     if (!bank) {
@@ -533,7 +532,6 @@ const addAccountDetail = async (req, res) => {
     }
     const bankCode = bank.code;
 
-    // 3. Resolve the account details using the found bank code
     const response = await fetch(
       `https://api.paystack.co/bank/resolve?account_number=${accountNumber}&bank_code=${bankCode}`,
       {
@@ -542,21 +540,60 @@ const addAccountDetail = async (req, res) => {
         },
       }
     );
-
     const data = await response.json();
     if (!data.status) {
       return res.status(400).json({ message: data.message || "Could not resolve account details." });
     }
 
-    // Return account name to frontend
-    res.json({
+    res.status(200).json({
       accountName: data.data.account_name,
       accountNumber: data.data.account_number,
+      bankName: bank.name,
     });
+
   } catch (error) {
-    res.status(500).json({ message: "Server error resolving account", error: error.message });
+    res.status(500).json({ message: "Server error while resolving account details", error: error.message });
   }
 }
+
+const saveAccountDetail = async (req, res) => {
+  const { accountNumber, accountName, bankName } = req.body;
+
+  if (!accountNumber || !accountName || !bankName) {
+    return res.status(400).json({ message: "Account number, account name, and bank name are required." });
+  }
+
+  try {
+    const user = await User.findById(req.user._id);
+    if (!user) {
+      return res.status(404).json({ message: "User not found." });
+    }
+
+    // To get the bankCode, we can fetch the banks again.
+    // This ensures data integrity and that we save the correct code.
+    const banksData = await fetchPaystackBanks();
+    const bank = banksData.find(b => b.name.toLowerCase() === bankName.toLowerCase());
+    if (!bank) {
+      return res.status(404).json({ message: `Bank '${bankName}' is not supported.` });
+    }
+
+    user.settlementAccount = {
+      accountNumber: accountNumber,
+      accountName: accountName,
+      bankName: bank.name,
+      bankCode: bank.code,
+    };
+
+    await user.save();
+
+    res.status(200).json({
+      message: "Account details saved successfully.",
+      accountDetails: user.settlementAccount,
+    });
+  } catch (error) {
+    res.status(500).json({ message: "Server error while saving account details", error: error.message });
+  }
+};
 
 const validateToken = async (req, res) => {
   const { token } = req.body
@@ -581,7 +618,8 @@ module.exports = {
   editManual,
   deleteManual,
   searchManual,
-  addAccountDetail
+  resolveAccountDetail,
+  saveAccountDetail
 };
 // http://localhost:3142/api/changePin/6a2c1a43430f7641c6c48926
 

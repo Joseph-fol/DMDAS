@@ -66,11 +66,19 @@ let userSchema = mongoose.Schema({
     settlementAccount: {
         accountNumber: {
             type: String,
-            default: null
+            trim: true
         },
         bankName: {
             type: String,
-            default: null
+            trim: true
+        },
+        accountName: {
+            type: String,
+            trim: true
+        },
+        bankCode: {
+            type: String,
+            trim: true
         }
     },
 
