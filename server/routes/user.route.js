@@ -1,14 +1,15 @@
 const express = require("express")
 const router = express.Router()
 const { verifyToken, isRep, isStudent } = require("../middleware/auth")
-const {userSignup, userSignin, requestPinReset, resetPinWithOTP, addManual, getRepManuals, resetPasswordSetting, editManual, deleteManual} = require("../controllers/user.controller")
+const {userSignup, userSignin, requestPinReset, requestPinResetByEmail, resetPinWithOTP, addManual, getRepManuals, resetPasswordSetting, editManual, deleteManual, searchManual} = require("../controllers/user.controller")
 const { initializeTransaction, verifyTransaction } = require("../controllers/paystack")
 const {uploadProfilePicture} = require("../controllers/uploadProfilePicture")
 
 
 router.post("/signup", userSignup)
 router.post("/signin", userSignin)
-router.post("/requestPin", requestPinReset)
+router.post("/requestPin", requestPinReset) // For WhatsApp
+router.post("/requestPinByEmail", requestPinResetByEmail) // For Email
 router.post("/resetPin", resetPinWithOTP)
 router.get("/profile", verifyToken, (req, res) => {
     res.status(200).json({ user: req.user });
@@ -27,5 +28,8 @@ router.post("/rep/addManuals", verifyToken, isRep, addManual)
 router.get("/rep/getManual", verifyToken, isRep, getRepManuals)
 router.put("/rep/editManual/:id", verifyToken, isRep, editManual)
 router.delete("/rep/deleteManual/:id", verifyToken, isRep, deleteManual)
+
+// Route for students to search for manuals
+router.post("/student/searchManuals", verifyToken, isStudent, searchManual)
 
 module.exports = router;

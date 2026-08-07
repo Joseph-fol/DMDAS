@@ -3,6 +3,7 @@ const bcrypt = require("bcrypt");
 const jwt = require("jsonwebtoken");
 const crypto = require("crypto");
 const Transaction = require("../models/transaction.model");
+const { sendWelcomeEmail, sendPinResetEmail } = require("../util/emailService");
 const AddManual = require("../models/manual.model")
 
 const accountSid = `${process.env.TWILIO_ACCOUNT_SID}`;
@@ -49,6 +50,13 @@ const userSignup = async (req, res) => {
 
     await newUserInformation.save();
     console.log("User details successfully saved");
+
+    try {
+      await sendWelcomeEmail(newUserInformation.email, newUserInformation.fullName);
+      console.log(`Welcome email sent to ${newUserInformation.email}`);
+    } catch (emailError) {
+      console.error("Failed to send welcome email:", emailError.message);
+    }
 
     const token = jwt.sign({ matricNumber }, jwtSecretKey, { expiresIn: "1hr" });
     return res.status(201).json({
@@ -143,6 +151,42 @@ const requestPinReset = async (req, res) => {
     });
   } catch (error) {
     console.error("Error during requestPinReset:", error);
+    res.status(500).json({
+      message: "Internal Server Error",
+    });
+  }
+};
+
+const requestPinResetByEmail = async (req, res) => {
+  const { email } = req.body;
+  if (!email) {
+    return res.status(400).json({
+      message: "Email is required.",
+    });
+  }
+
+  try {
+    const user = await User.findOne({ email });
+    if (!user) {
+      console.log(`PIN reset request for non-existent email: ${email}`);
+      return res.status(200).json({
+        message: "If an account with this email exists, a PIN reset code has been sent.",
+      });
+    }
+
+    const generatedOTP = Math.floor(100000 + Math.random() * 900000).toString();
+    user.pinResetOTP = generatedOTP;
+    user.pinResetExpires = Date.now() + 600000; // OTP expires in 10 minutes
+    await user.save();
+
+    await sendPinResetEmail(user.email, user.fullName, generatedOTP);
+
+    console.log(`PIN reset OTP sent to ${user.email}`);
+    res.status(200).json({
+      message: "A PIN reset code has been sent to your registered email address.",
+    });
+  } catch (error) {
+    console.error("Error during requestPinResetByEmail:", error);
     res.status(500).json({
       message: "Internal Server Error",
     });
@@ -411,51 +455,44 @@ const getRepManuals = async (req, res) => {
 }
 
 const searchManual = async (req, res) => {
-  try {
+    try {
+        const { q, semester } = req.body;
+        const { department } = req.user; // User must be authenticated
 
+        // Base query to scope results to the user's department and available manuals
+        let query = { department: department, isAvailable: true };
 
-    const { q, courseTitle, courseCode } = req.body
-    const { department } = req.user
+        if (q && q.trim().length > 0) {
+            const searchTerm = q.trim();
+            // Using regex for a flexible "contains" search on both title and code
+            const searchRegex = new RegExp(searchTerm, "i"); // 'i' for case-insensitive
 
-    // Based query scope to each department
-    let query = { department }
+            query.$or = [
+                { courseCode: searchRegex },
+                { courseTitle: searchRegex }
+            ];
+        }
 
-    if (q && q.trim().length > 0) {
-      const searchTerm = q.trim();
+        // Optional filter for semester
+        if (semester) {
+            query.semester = semester;
+        }
 
-      if (searchTerm.length >= 3) {
-        query.$text = { $search: searchTerm }
-      }
-    } else {
-      const prefixRegex = new RegExp(`^${searchTerm}`, "i")
-      query.$or = [
-        { courseCode: prefixRegex },
-        { courseTitle: prefixRegex }
-      ];
+        const manuals = await AddManual.find(query)
+            .select("courseCode courseTitle semester price isAvailable")
+            .sort({ courseCode: 1 })
+            .lean();
+
+        return res.status(200).json({
+            success: true,
+            count: manuals.length,
+            data: manuals,
+        });
+    } catch (error) {
+        console.error("[Manual search error]", error.message);
+        return res.status(500).json({ success: false, message: "Failed to search for manuals." });
     }
-
-    //Optional filters (i.e Harmattan/Rain semester)
-    if (semester) {
-      query.semester = semester
-    }
-
-    const manuals = await AddManual.find(query)
-      .select("courseCode courseTitle semester price printedStock availableStock isAvailable")
-      .sort({ courseCode: 1 }).lean()
-
-    return res.status(200).json({
-      success: true,
-      count: manuals.length,
-      data: manuals
-    })
-  } catch (error) {
-    console.error("[Manual search error]", error.message)
-    return res.status(500).json({
-      success: false,
-      message: "Failed to search manual inventory"
-    })
-  }
-}
+};
 
 const validateToken = async (req, res) => {
   const { token } = req.body
@@ -471,13 +508,15 @@ module.exports = {
   userSignup,
   userSignin,
   requestPinReset,
+  requestPinResetByEmail,
   resetPinWithOTP,
   getUserProfile,
   addManual,
   getRepManuals,
   resetPasswordSetting,
   editManual,
-  deleteManual
+  deleteManual,
+  searchManual
 };
 // http://localhost:3142/api/changePin/6a2c1a43430f7641c6c48926
 

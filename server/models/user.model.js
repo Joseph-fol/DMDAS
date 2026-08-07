@@ -13,6 +13,7 @@ let userSchema = mongoose.Schema({
         lowercase: true,
         trim: true
     },
+    
     matricNumber: {
         type: String,
         required: [true, "Matric Number is required"],
@@ -54,7 +55,7 @@ let userSchema = mongoose.Schema({
         type: String,
         enum: ["rep", "student", "superRep"],
         default: "student",
-        required: true,
+        // required: true,
         index: true
     },
     superRepPasscode: {
