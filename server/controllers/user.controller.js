@@ -456,39 +456,48 @@ const getRepManuals = async (req, res) => {
 
 const searchManual = async (req, res) => {
     try {
-        const { q, semester } = req.body;
+        const q = req.body.q ?? req.query.q ?? "";
+        const semester = req.body.semester ?? req.query.semester;
         const { department } = req.user; // The student's department
 
         // 1. Find all 'rep' users who belong to the student's department.
         const repsInDepartment = await User.find({ department: department, role: 'rep' }).select('_id');
         const repIds = repsInDepartment.map(rep => rep._id);
 
-        // If no reps are found for the department, no manuals will be available.
-        if (repIds.length === 0) {
-            return res.status(200).json({ success: true, count: 0, data: [] });
-        }
-
         // 2. Build the query for manuals.
-        let query = { addedBy: { $in: repIds }, isAvailable: true };
+        const buildQuery = (restrictToDepartmentReps) => {
+            const query = { isAvailable: true };
 
-        if (q && q.trim().length > 0) {
-            const searchTerm = q.trim();
-            const searchRegex = new RegExp(searchTerm, "i"); // 'i' for case-insensitive
+            if (restrictToDepartmentReps && repIds.length > 0) {
+                query.addedBy = { $in: repIds };
+            }
 
-            // Add search term to the query
-            query.$or = [{ courseCode: searchRegex }, { courseTitle: searchRegex }];
-        }
+            if (q && q.trim().length > 0) {
+                const searchTerm = q.trim();
+                const searchRegex = new RegExp(searchTerm, "i");
 
-        // Optional filter for semester
-        if (semester) {
-            query.semester = semester;
-        }
+                query.$or = [{ courseCode: searchRegex }, { courseTitle: searchRegex }];
+            }
 
-        // 3. Find manuals matching the constructed query.
-        const manuals = await AddManual.find(query)
-            .select("courseCode courseTitle semester price isAvailable")
+            if (semester) {
+                query.semester = semester;
+            }
+
+            return query;
+        };
+
+        // Try department reps first, then fall back to all available manuals.
+        let manuals = await AddManual.find(buildQuery(true))
+            .select("courseCode courseTitle semester price isAvailable printedStock claimedCount availableStock stockStatus")
             .sort({ courseCode: 1 })
             .lean();
+
+        if (manuals.length === 0) {
+            manuals = await AddManual.find(buildQuery(false))
+                .select("courseCode courseTitle semester price isAvailable printedStock claimedCount availableStock stockStatus addedBy")
+                .sort({ courseCode: 1 })
+                .lean();
+        }
 
         return res.status(200).json({
             success: true,

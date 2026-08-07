@@ -71,5 +71,17 @@ manualSchema.virtual("availableStock").get(function() {
     return this.printedStock - this.claimedCount;
 });
 
+// Add a virtual property for stock status
+manualSchema.virtual("stockStatus").get(function() {
+    const stock = this.availableStock;
+    if (stock > 10) {
+        return "In Stock";
+    } else if (stock > 0 && stock <= 10) {
+        return "Low Stock";
+    } else {
+        return "Out of Stock";
+    }
+});
+
 const Manual = mongoose.model("Manual", manualSchema)
 module.exports = Manual

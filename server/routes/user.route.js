@@ -30,6 +30,6 @@ router.put("/rep/editManual/:id", verifyToken, isRep, editManual)
 router.delete("/rep/deleteManual/:id", verifyToken, isRep, deleteManual)
 
 // Route for students to search for manuals
-router.post("/student/searchManuals", verifyToken, isStudent, searchManual)
+router.post("/rep/searchManuals", verifyToken, isRep, searchManual)
 
 module.exports = router;
