@@ -312,11 +312,11 @@ const getUserProfile = async (req, res) => {
 };
 
 const addManual = async (req, res) => {
-  const { courseCode, courseTitle, price, quantity, semester } = req.body;
+  const { courseCode, courseTitle, price, printedStock, semester } = req.body;
   // The logged-in user's ID is attached to the request by the verifyToken middleware
   const repId = req.user._id;
 
-  if (!courseCode || !courseTitle || !price || !quantity || !semester) {
+  if (!courseCode || !courseTitle || !price || !semester) {
     return res.status(400).json({
       message: "All manual fields are required."
     });
@@ -327,7 +327,7 @@ const addManual = async (req, res) => {
       courseCode,
       courseTitle,
       price,
-      quantity,
+      printedStock,
       semester,
       addedBy: repId, // Associate the manual with the rep
     });
@@ -351,9 +351,9 @@ const addManual = async (req, res) => {
 const editManual = async (req, res) => {
   const { id } = req.params
   const repId = req.user._id
-  const { courseCode, courseTitle, price, quantity, semester } = req.body;
+  const { courseCode, courseTitle, price, printedStock, semester } = req.body;
 
-  if (!courseCode || !courseTitle || !price || !quantity || !semester) {
+  if (!courseCode || !courseTitle || !price || !printedStock || !semester) {
     return res.status(400).json({
       message: "All manual fields are required."
     });
@@ -378,7 +378,7 @@ const editManual = async (req, res) => {
       courseCode,
       courseTitle,
       price,
-      quantity,
+      printedStock,
       semester,
     }
 
@@ -457,20 +457,26 @@ const getRepManuals = async (req, res) => {
 const searchManual = async (req, res) => {
     try {
         const { q, semester } = req.body;
-        const { department } = req.user; // User must be authenticated
+        const { department } = req.user; // The student's department
 
-        // Base query to scope results to the user's department and available manuals
-        let query = { department: department, isAvailable: true };
+        // 1. Find all 'rep' users who belong to the student's department.
+        const repsInDepartment = await User.find({ department: department, role: 'rep' }).select('_id');
+        const repIds = repsInDepartment.map(rep => rep._id);
+
+        // If no reps are found for the department, no manuals will be available.
+        if (repIds.length === 0) {
+            return res.status(200).json({ success: true, count: 0, data: [] });
+        }
+
+        // 2. Build the query for manuals.
+        let query = { addedBy: { $in: repIds }, isAvailable: true };
 
         if (q && q.trim().length > 0) {
             const searchTerm = q.trim();
-            // Using regex for a flexible "contains" search on both title and code
             const searchRegex = new RegExp(searchTerm, "i"); // 'i' for case-insensitive
 
-            query.$or = [
-                { courseCode: searchRegex },
-                { courseTitle: searchRegex }
-            ];
+            // Add search term to the query
+            query.$or = [{ courseCode: searchRegex }, { courseTitle: searchRegex }];
         }
 
         // Optional filter for semester
@@ -478,6 +484,7 @@ const searchManual = async (req, res) => {
             query.semester = semester;
         }
 
+        // 3. Find manuals matching the constructed query.
         const manuals = await AddManual.find(query)
             .select("courseCode courseTitle semester price isAvailable")
             .sort({ courseCode: 1 })

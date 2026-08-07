@@ -18,11 +18,7 @@ const manualSchema = new mongoose.Schema({
         required: [true, "Price is required"],
         min: [0, "Price cannot be negative"]
     },
-    quantity: {
-        type: Number,
-        required: true,
-        default: 0
-    },
+    
     semester: {
         type: String,
         enum: ["Harmattan", "Rain"],
@@ -46,6 +42,7 @@ const manualSchema = new mongoose.Schema({
         default: true,
         index: true
     },
+    
     addedBy: {
         type: mongoose.Schema.Types.ObjectId,
         ref: 'User',
@@ -69,8 +66,10 @@ manualSchema.index({
     semester: "text"
 })
 
-// Calculate available stock dynamically without user input
-manualSchema.virtual("availableStock").get()
+// Calculate available stock dynamically
+manualSchema.virtual("availableStock").get(function() {
+    return this.printedStock - this.claimedCount;
+});
 
 const Manual = mongoose.model("Manual", manualSchema)
 module.exports = Manual

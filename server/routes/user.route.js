@@ -24,7 +24,7 @@ router.get("/admin/dashboard", verifyToken, isRep, (req, res) => {
 router.post("/avatar/upload", verifyToken, uploadProfilePicture)
 
 // Routes for Representatives to manage manuals
-router.post("/rep/addManuals", verifyToken, isRep, addManual)
+router.post("/rep/addManual", verifyToken, isRep, addManual)
 router.get("/rep/getManual", verifyToken, isRep, getRepManuals)
 router.put("/rep/editManual/:id", verifyToken, isRep, editManual)
 router.delete("/rep/deleteManual/:id", verifyToken, isRep, deleteManual)
