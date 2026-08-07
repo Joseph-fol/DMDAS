@@ -32,7 +32,7 @@ router.post("/rep/addManual", verifyToken, isRep, addManual)
 router.get("/rep/getManual", verifyToken, isRep, getRepManuals)
 router.put("/rep/editManual/:id", verifyToken, isRep, editManual)
 router.delete("/rep/deleteManual/:id", verifyToken, isRep, deleteManual)
-router.post("/rep/resolve-account", verifyToken, isRep, resolveAccountDetail)
+router.post("/rep/resolveAccount", verifyToken, isRep, resolveAccountDetail)
 router.post("/rep/save-account", verifyToken, isRep, saveAccountDetail)
 
 // Route for students to search for manuals

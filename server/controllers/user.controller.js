@@ -523,7 +523,7 @@ const resolveAccountDetail = async (req, res) => {
     });
   }
 
-  try { 
+  try {
     const banksData = await fetchPaystackBanks();
     const bank = banksData.find(b => b.name.toLowerCase() === bankName.toLowerCase());
 
@@ -560,7 +560,9 @@ const saveAccountDetail = async (req, res) => {
   const { accountNumber, accountName, bankName } = req.body;
 
   if (!accountNumber || !accountName || !bankName) {
-    return res.status(400).json({ message: "Account number, account name, and bank name are required." });
+    return res.status(400).json({
+      message: "Account number, account name, and bank name are required."
+    });
   }
 
   try {
@@ -568,10 +570,9 @@ const saveAccountDetail = async (req, res) => {
     if (!user) {
       return res.status(404).json({ message: "User not found." });
     }
-
-    // To get the bankCode, we can fetch the banks again.
-    // This ensures data integrity and that we save the correct code.
+    
     const banksData = await fetchPaystackBanks();
+
     const bank = banksData.find(b => b.name.toLowerCase() === bankName.toLowerCase());
     if (!bank) {
       return res.status(404).json({ message: `Bank '${bankName}' is not supported.` });
@@ -672,3 +673,8 @@ module.exports = {
 //       "semester": "Harmattan",
 //       "printedStock": 0,
 //       "claimedCount": 0,
+
+// {
+//   "accountNumber": "2332360360",
+//   "bankName": "United Bank for Africa"
+// }
