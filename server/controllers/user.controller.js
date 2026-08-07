@@ -3,6 +3,7 @@ const bcrypt = require("bcrypt");
 const jwt = require("jsonwebtoken");
 const crypto = require("crypto");
 const Transaction = require("../models/transaction.model");
+const { fetchPaystackBanks } = require("./paystack");
 const { sendWelcomeEmail, sendPinResetEmail } = require("../util/emailService");
 const AddManual = require("../models/manual.model")
 
@@ -458,60 +459,104 @@ const getRepManuals = async (req, res) => {
 }
 
 const searchManual = async (req, res) => {
-    try {
-        const q = req.body.q ?? req.query.q ?? "";
-        const semester = req.body.semester ?? req.query.semester;
-        const { department } = req.user; // The student's department
+  try {
+    const q = req.body.q ?? req.query.q ?? "";
+    const semester = req.body.semester ?? req.query.semester;
+    const { department } = req.user; // The student's department
 
-        // 1. Find all 'rep' users who belong to the student's department.
-        const repsInDepartment = await User.find({ department: department, role: 'rep' }).select('_id');
-        const repIds = repsInDepartment.map(rep => rep._id);
+    // 1. Find all 'rep' users who belong to the student's department.
+    const repsInDepartment = await User.find({ department: department, role: 'rep' }).select('_id');
+    const repIds = repsInDepartment.map(rep => rep._id);
 
-        // 2. Build the query for manuals.
-        const buildQuery = (restrictToDepartmentReps) => {
-            const query = { isAvailable: true };
+    // 2. Build the query for manuals.
+    const buildQuery = (restrictToDepartmentReps) => {
+      const query = { isAvailable: true };
 
-            if (restrictToDepartmentReps && repIds.length > 0) {
-                query.addedBy = { $in: repIds };
-            }
+      if (restrictToDepartmentReps && repIds.length > 0) {
+        query.addedBy = { $in: repIds };
+      }
 
-            if (q && q.trim().length > 0) {
-                const searchTerm = q.trim();
-                const searchRegex = new RegExp(searchTerm, "i");
+      if (q && q.trim().length > 0) {
+        const searchTerm = q.trim();
+        const searchRegex = new RegExp(searchTerm, "i");
 
-                query.$or = [{ courseCode: searchRegex }, { courseTitle: searchRegex }];
-            }
+        query.$or = [{ courseCode: searchRegex }, { courseTitle: searchRegex }];
+      }
 
-            if (semester) {
-                query.semester = semester;
-            }
+      if (semester) {
+        query.semester = semester;
+      }
 
-            return query;
-        };
+      return query;
+    };
 
-        // Try department reps first, then fall back to all available manuals.
-        let manuals = await AddManual.find(buildQuery(true))
-            .select("courseCode courseTitle semester price isAvailable printedStock claimedCount availableStock stockStatus")
-            .sort({ courseCode: 1 })
-            .lean();
+    // Try department reps first, then fall back to all available manuals.
+    let manuals = await AddManual.find(buildQuery(true))
+      .select("courseCode courseTitle semester price isAvailable printedStock claimedCount availableStock stockStatus")
+      .sort({ courseCode: 1 })
+      .lean();
 
-        if (manuals.length === 0) {
-            manuals = await AddManual.find(buildQuery(false))
-                .select("courseCode courseTitle semester price isAvailable printedStock claimedCount availableStock stockStatus addedBy")
-                .sort({ courseCode: 1 })
-                .lean();
-        }
-
-        return res.status(200).json({
-            success: true,
-            count: manuals.length,
-            data: manuals,
-        });
-    } catch (error) {
-        console.error("[Manual search error]", error.message);
-        return res.status(500).json({ success: false, message: "Failed to search for manuals." });
+    if (manuals.length === 0) {
+      manuals = await AddManual.find(buildQuery(false))
+        .select("courseCode courseTitle semester price isAvailable printedStock claimedCount availableStock stockStatus addedBy")
+        .sort({ courseCode: 1 })
+        .lean();
     }
+
+    return res.status(200).json({
+      success: true,
+      count: manuals.length,
+      data: manuals,
+    });
+  } catch (error) {
+    console.error("[Manual search error]", error.message);
+    return res.status(500).json({ success: false, message: "Failed to search for manuals." });
+  }
 };
+
+const addAccountDetail = async (req, res) => {
+  const { accountNumber, bankName } = req.body;
+
+  if (!accountNumber || !bankName) {
+    return res.status(400).json({ message: "Account number and bank name are required." });
+  }
+
+  try {
+    // 1. Fetch all available banks using the reusable helper function
+    const banksData = await fetchPaystackBanks();
+
+    // 2. Find the bank code corresponding to the provided bank name
+    const bank = banksData.find(b => b.name.toLowerCase() === bankName.toLowerCase());
+
+    if (!bank) {
+      return res.status(404).json({ message: `Bank '${bankName}' is not supported.` });
+    }
+    const bankCode = bank.code;
+
+    // 3. Resolve the account details using the found bank code
+    const response = await fetch(
+      `https://api.paystack.co/bank/resolve?account_number=${accountNumber}&bank_code=${bankCode}`,
+      {
+        headers: {
+          Authorization: `Bearer ${process.env.PAYSTACK_SECRET_KEY}`,
+        },
+      }
+    );
+
+    const data = await response.json();
+    if (!data.status) {
+      return res.status(400).json({ message: data.message || "Could not resolve account details." });
+    }
+
+    // Return account name to frontend
+    res.json({
+      accountName: data.data.account_name,
+      accountNumber: data.data.account_number,
+    });
+  } catch (error) {
+    res.status(500).json({ message: "Server error resolving account", error: error.message });
+  }
+}
 
 const validateToken = async (req, res) => {
   const { token } = req.body
@@ -535,7 +580,8 @@ module.exports = {
   resetPasswordSetting,
   editManual,
   deleteManual,
-  searchManual
+  searchManual,
+  addAccountDetail
 };
 // http://localhost:3142/api/changePin/6a2c1a43430f7641c6c48926
 

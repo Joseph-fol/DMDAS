@@ -103,4 +103,36 @@ const verifyTransaction = async (req, res) => {
     res.sendStatus(200);
 };
 
-module.exports = { initializeTransaction, verifyTransaction }
+const fetchPaystackBanks = async () => {
+    try {
+        const response = await fetch('https://api.paystack.co/bank?country=nigeria', {
+            headers: {
+                Authorization: `Bearer ${process.env.PAYSTACK_SECRET_KEY}`,
+            },
+        });
+        const data = await response.json();
+
+        if (!data.status || !data.data) {
+            console.error("Paystack Error fetching banks:", data);
+            throw new Error("Failed to fetch banks from Paystack");
+        }
+        return data.data; // Return the array of bank objects
+    } catch (error) {
+        console.error("Error in fetchPaystackBanks:", error);
+        throw error; // Re-throw the error to be caught by the caller
+    }
+};
+
+const getBankDetails = async (req, res) => {
+    try {
+        const banksData = await fetchPaystackBanks();
+        const bankCodes = banksData.map(bank => bank.code);
+
+        res.json({ bankCodes });
+    } catch (error) {
+        res.status(500).json({ message: "Failed to fetch banks" });
+    }
+};
+
+
+module.exports = { initializeTransaction, verifyTransaction, getBankDetails, fetchPaystackBanks }
