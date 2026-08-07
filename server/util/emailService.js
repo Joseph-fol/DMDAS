@@ -14,8 +14,8 @@ const sendWelcomeEmail = async (email, fullName) => {
     }
 
     const mailOptions = {
-        from: 'DMDAS <onboarding@resend.dev>',
-        to: "olawoyinjoseph05@gmail.com",
+        from: 'DMDAS <onboarding@resend.dev>', // Using resend.dev for development as discussed
+        to: email,
         subject: "Welcome to DMDAS - Your Account is Ready",
         html: `
             <!DOCTYPE html>

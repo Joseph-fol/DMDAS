@@ -433,7 +433,10 @@ const deleteManual = async (req, res) => {
 
 const getRepManuals = async (req, res) => {
   try {
-    const manuals = await AddManual.find({ addedBy: req.user._id }).populate('addedBy', 'fullName email phoneNumber');
+    const manuals = await AddManual.find({ addedBy: req.user._id })
+      .select("courseCode courseTitle semester price isAvailable printedStock claimedCount availableStock stockStatus")
+      .populate('addedBy', 'fullName email phoneNumber'); // Populate only relevant user fields
+
     if (manuals.length === 0) {
       console.log("No manuals found for this representative.");
       return res.status(200).json(
@@ -577,3 +580,11 @@ module.exports = {
 //   "pin": "2701",
 //   "role": "rep",
 // }
+
+//  "_id": "6a75e43efce3d6a38054eef6",
+//       "courseTitle": "Prototyping Techniques",
+//       "courseCode": "CPE 405",
+//       "price": 2600,
+//       "semester": "Harmattan",
+//       "printedStock": 0,
+//       "claimedCount": 0,
