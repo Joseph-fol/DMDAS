@@ -156,7 +156,7 @@ export default function Signin() {
               <p className="mt-2 text-sm text-[#F43F5E]">
                 {" "}
                 Do not have account yet?{" "}
-                <Link href="/" className="font-semibold hover:underline">
+                <Link href="/signup" className="font-semibold hover:underline">
                   Signup
                 </Link>
               </p>

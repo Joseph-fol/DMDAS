@@ -528,8 +528,14 @@ const resolveAccountDetail = async (req, res) => {
     const bank = banksData.find(b => b.name.toLowerCase() === bankName.toLowerCase());
 
     if (!bank) {
-      return res.status(404).json({ message: `Bank '${bankName}' is not supported.` });
+      return res.status(200).json({
+        verificationFailed: true,
+        message: "Automatic verification failed for this bank. Please enter your account name manually.",
+        accountNumber,
+        bankName,
+      });
     }
+
     const bankCode = bank.code;
 
     const response = await fetch(
@@ -540,9 +546,19 @@ const resolveAccountDetail = async (req, res) => {
         },
       }
     );
+    
     const data = await response.json();
     if (!data.status) {
-      return res.status(400).json({ message: data.message || "Could not resolve account details." });
+      if ((data.message || "").toLowerCase().includes("could not resolve account")) {
+        return res.status(200).json({
+          verificationFailed: true,
+          message: "Automatic verification failed. Please enter your account name manually.",
+          accountNumber,
+          bankName: bank.name,
+        });
+      }
+
+      return res.status(400).json({ message: data.message || "Could not validate account details." });
     }
 
     res.status(200).json({
@@ -574,15 +590,12 @@ const saveAccountDetail = async (req, res) => {
     const banksData = await fetchPaystackBanks();
 
     const bank = banksData.find(b => b.name.toLowerCase() === bankName.toLowerCase());
-    if (!bank) {
-      return res.status(404).json({ message: `Bank '${bankName}' is not supported.` });
-    }
 
     user.settlementAccount = {
       accountNumber: accountNumber,
       accountName: accountName,
-      bankName: bank.name,
-      bankCode: bank.code,
+      bankName: bank ? bank.name : bankName,
+      bankCode: bank ? bank.code : null,
     };
 
     await user.save();
@@ -595,6 +608,11 @@ const saveAccountDetail = async (req, res) => {
     res.status(500).json({ message: "Server error while saving account details", error: error.message });
   }
 };
+
+const editBankDetails = async (req, res) => {
+  const repId = req.user._id;
+  const { } = req.body
+}
 
 const validateToken = async (req, res) => {
   const { token } = req.body
@@ -620,7 +638,8 @@ module.exports = {
   deleteManual,
   searchManual,
   resolveAccountDetail,
-  saveAccountDetail
+  saveAccountDetail,
+  editBankDetails
 };
 // http://localhost:3142/api/changePin/6a2c1a43430f7641c6c48926
 

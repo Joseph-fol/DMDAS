@@ -71,7 +71,6 @@ export default function Home() {
             <div className="absolute bottom-8 left-2 h-16 w-16 rounded-full bg-[#efcdd8]/70" />
             <div className="absolute right-3 top-8 h-20 w-20 rounded-full bg-[#f3dde4]/70" />
             <div className="relative z-10 overflow-hidden rounded-3xl border border-[#e7d2d9] bg-white/85 p-4 shadow-[0_20px_50px_rgba(90,35,53,0.18)]">
-
               <Image
                 src="/dmdas-logo.png"
                 alt="DMDAS logo"
@@ -81,24 +80,6 @@ export default function Home() {
                 className="h-auto w-[18rem] object-contain sm:w-[21rem]"
               />
             </div>
-            {/* <div className="relative mt-8 h-[24rem] w-[19rem] rounded-[1.8rem] bg-gradient-to-br from-[#6f2940] to-[#4b172a] p-5 shadow-[0_24px_55px_rgba(83,28,46,0.35)]">
-              <div className="h-full w-full rounded-[1.45rem] border border-white/20 bg-gradient-to-b from-white/10 to-transparent p-6">
-                <div className="mt-16 flex justify-center">
-                  <svg
-                    viewBox="0 0 64 64"
-                    className="h-20 w-20 fill-none stroke-white stroke-[2.6]"
-                    aria-hidden="true"
-                  >
-                    <path d="M8 24c6-4 14-6 24-4 10-2 18 0 24 4v24c-6-4-14-6-24-4-10-2-18 0-24 4V24Z" />
-                    <path d="M32 20v28" />
-                    <circle cx="32" cy="12" r="5" />
-                    <path d="M18 32h10m18 0h-8" />
-                    <path d="m38 38 4 4 8-8" />
-                  </svg>
-                </div>
-              </div>
-              <div className="absolute -bottom-4 left-10 h-6 w-24 rounded-b-2xl bg-[#3e1222]/70 blur-[0.5px]" />
-            </div> */}
           </div>
         </div>
       </section>

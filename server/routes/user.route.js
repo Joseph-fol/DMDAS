@@ -1,7 +1,7 @@
 const express = require("express")
 const router = express.Router()
 const { verifyToken, isRep, isStudent } = require("../middleware/auth")
-const {userSignup, userSignin, requestPinReset, requestPinResetByEmail, resetPinWithOTP, addManual, getRepManuals, resetPasswordSetting, editManual, deleteManual, searchManual, resolveAccountDetail, saveAccountDetail} = require("../controllers/user.controller")
+const {userSignup, userSignin, requestPinReset, requestPinResetByEmail, resetPinWithOTP, addManual, getRepManuals, resetPasswordSetting, editManual, deleteManual, searchManual, resolveAccountDetail, saveAccountDetail, editBankDetails} = require("../controllers/user.controller")
 const { initializeTransaction, verifyTransaction, getBankDetails } = require("../controllers/paystack")
 const {uploadProfilePicture} = require("../controllers/uploadProfilePicture")
 
@@ -33,7 +33,8 @@ router.get("/rep/getManual", verifyToken, isRep, getRepManuals)
 router.put("/rep/editManual/:id", verifyToken, isRep, editManual)
 router.delete("/rep/deleteManual/:id", verifyToken, isRep, deleteManual)
 router.post("/rep/resolveAccount", verifyToken, isRep, resolveAccountDetail)
-router.post("/rep/save-account", verifyToken, isRep, saveAccountDetail)
+router.post("/rep/saveAccount", verifyToken, isRep, saveAccountDetail)
+router.post("/rep/editBankDetails/", verifyToken, isRep, editManual)
 
 // Route for students to search for manuals
 router.post("/rep/searchManuals", verifyToken, isRep, searchManual)
