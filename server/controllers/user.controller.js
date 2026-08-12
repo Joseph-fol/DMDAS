@@ -611,7 +611,7 @@ const saveAccountDetail = async (req, res) => {
 
 const editBankDetails = async (req, res) => {
   const repId = req.user._id;
-  const { } = req.body
+  const {accountNumber, account } = req.body
 }
 
 const validateToken = async (req, res) => {

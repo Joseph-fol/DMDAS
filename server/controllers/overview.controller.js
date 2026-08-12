@@ -5,9 +5,9 @@ const User = require("../models/user.model");
 
 const getStudentOverview = async (req, res) => {
     const studentId = req.user._id;
-    let studentProfile = null
+    let student = null
 
-    const studentProfile = await User.findOne(studentId)
+    let studentProfile = await User.findOne(studentId)
     if (!studentProfile) {
         res.status(404).json({
             success: false,
