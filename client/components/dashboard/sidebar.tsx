@@ -17,7 +17,7 @@ const navigationItems = [
     ),
   },
   {
-    label: "Available Manuals",
+    label: "My Manuals",
     href: "/student/studentDashboard/available-manuals",
     icon: (
       <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" className="h-4 w-4" aria-hidden="true">
@@ -27,7 +27,7 @@ const navigationItems = [
     ),
   },
   {
-    label: "Transaction History",
+    label: "Payment",
     href: "/student/studentDashboard/transaction-history",
     icon: (
       <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" className="h-4 w-4" aria-hidden="true">
@@ -37,7 +37,7 @@ const navigationItems = [
     ),
   },
   {
-    label: "Profile Settings",
+    label: "Profile",
     href: "/student/studentDashboard/my-profile-settings",
     icon: (
       <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" className="h-4 w-4" aria-hidden="true">
@@ -63,7 +63,7 @@ export default function DashboardSidebar({ setIsSidebarOpen }: DashboardSidebarP
   const pathname = usePathname();
 
   return (
-    <aside className="flex h-full w-full flex-col border-r border-slate-200 bg-white">
+    <aside className="flex h-full w-64 flex-col border-r border-slate-300 bg-white">
       <div className="border-b border-slate-200 px-6 py-5">
         <div className="flex items-center gap-3">
           <div className="flex h-11 w-11 items-center justify-center rounded-2xl bg-[#FDE7ED] text-[#381E25] ring-1 ring-[#381E25]">
@@ -79,17 +79,17 @@ export default function DashboardSidebar({ setIsSidebarOpen }: DashboardSidebarP
         </div>
       </div>
 
-      <nav className="flex-1 px-3 py-4">
+      <nav className="flex-1 px-3 py-2">
         <div className="space-y-1">
           {navigationItems.map((item) => {
             const isActive = pathname === item.href;
 
             return (
-              <Link key={item.href} href={item.href} className={`flex items-center gap-3 rounded-xl border px-3 py-3 text-sm font-semibold transition ${isActive ? "border-[#FDF8F9] bg-[#FDE7ED] text-[#381E25]" : "border-transparent text-slate-600 hover:border-slate-200 hover:bg-[#FDF8F9] hover:text-slate-900" }`}
+              <Link key={item.href} href={item.href} className={`flex items-center gap-3 rounded-xl border px-3 py-2 text-[16px] font-semibold transition ${isActive ? "border-[#FDF8F9] bg-[#FDE7ED] text-[#C70036]" : "border-transparent text-slate-600 hover:border-slate-200 hover:bg-[#FDF8F9] hover:text-slate-900" }`}
                 onClick={() => setIsSidebarOpen(false)}
                 aria-current={isActive ? "page" : undefined}
               >
-                <span className={isActive ? "text-slate-950" : "text-slate-400"}>{item.icon}</span>
+                <span className={isActive ? "text-rose-600" : "text-slate-600"}>{item.icon}</span>
                 <span>{item.label}</span>
               </Link>
             );

@@ -414,6 +414,7 @@ const deleteManual = async (req, res) => {
     if (manual.addedBy.toString() !== repId.toString()) {
       return res.status(403).json({
         message: "Access denied. You can only delete manuals you have added."
+        
       })
     }
 

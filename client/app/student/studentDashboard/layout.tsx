@@ -18,7 +18,7 @@ export default function StudentDashboardLayout({ children }: { children: ReactNo
   }, [router]);
 
   return (
-    <div className="min-h-screen bg-[#FDF8F9] text-slate-900 lg:grid lg:grid-cols-[18rem_minmax(0,1fr)]">
+    <div className="min-h-screen bg-[#F8FAFC] text-slate-900 lg:grid lg:grid-cols-[16rem_minmax(0,1fr)]">
       <div className="hidden lg:block lg:sticky lg:top-0 lg:h-screen">
         <DashboardSidebar isSidebarOpen={isSidebarOpen} setIsSidebarOpen={setIsSidebarOpen} />
       </div>
