@@ -186,7 +186,7 @@ export default function Dashboard() {
 
         <div className="flex items-center gap-4">
           <a
-            href="/student/available-manuals"
+            href="/student/studentDashboard/purchase-manual"
             className="rounded-md bg-rose-600 px-4 my-4 py-2 text-md font-semibold text-white shadow-sm hover:bg-rose-700"
           >
             + Browse Manuals
@@ -267,7 +267,7 @@ export default function Dashboard() {
           <div className="rounded-2xl border border-slate-200 bg-white p-4">
             <div className="flex items-center justify-between">
               <h3 className="text-lg font-semibold">Recent Payments</h3>
-              <a className="text-sm font-medium text-rose-600">View all</a>
+              <a href="/student/studentDashboard/transaction-history" className="text-sm font-medium text-rose-600">View all</a>
             </div>
 
             <div className="mt-4 overflow-hidden">
@@ -308,7 +308,7 @@ export default function Dashboard() {
             <div className="flex items-center justify-between">
               <h4 className="font-semibold">Available Manuals</h4>
               <a
-                href="/student/available-manuals"
+                href="/student/studentDashboard/purchase-manual"
                 className="text-sm font-medium text-rose-600"
               >
                 Purchase

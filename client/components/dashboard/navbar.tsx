@@ -14,6 +14,7 @@ export default function DashboardNavbar({ isSidebarOpen, setIsSidebarOpen }: Das
   if (!pathname) title = "Dashboard";
   else if (pathname.includes("available-manuals")) title = "My Manuals";
   else if (pathname.includes("transaction-history")) title = "Payments";
+  else if (pathname.includes("purchase-manual")) title = "Purchase Manual";
   else if (pathname.includes("my-profile-settings")) title = "Profile";
   else title = "Dashboard";
 
