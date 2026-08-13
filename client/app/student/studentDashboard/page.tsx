@@ -137,7 +137,7 @@ export default function Dashboard() {
       try {
         const baseURL = "http://localhost:5142";
         const response = await axios.get<UserProfile>(
-          `${baseURL}/api/student/profile`,
+          `${baseURL}/api/profile`,
           {
             headers: {
               Authorization: `Bearer ${token}`,
