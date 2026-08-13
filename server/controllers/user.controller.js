@@ -414,7 +414,7 @@ const deleteManual = async (req, res) => {
     if (manual.addedBy.toString() !== repId.toString()) {
       return res.status(403).json({
         message: "Access denied. You can only delete manuals you have added."
-        
+
       })
     }
 
@@ -463,10 +463,10 @@ const searchManual = async (req, res) => {
   try {
     const q = req.body.q ?? req.query.q ?? "";
     const semester = req.body.semester ?? req.query.semester;
-    const { department } = req.user; // The student's department
+    const { department, level } = req.user; // The student's department and level
 
-    // 1. Find all 'rep' users who belong to the student's department.
-    const repsInDepartment = await User.find({ department: department, role: 'rep' }).select('_id');
+    // 1. Find all 'rep' users who belong to the student's department and level.
+    const repsInDepartment = await User.find({ department, level, role: 'rep' }).select('_id');
     const repIds = repsInDepartment.map(rep => rep._id);
 
     // 2. Build the query for manuals.
@@ -512,6 +512,48 @@ const searchManual = async (req, res) => {
   } catch (error) {
     console.error("[Manual search error]", error.message);
     return res.status(500).json({ success: false, message: "Failed to search for manuals." });
+  }
+};
+
+const getDepartmentLevelManuals = async (req, res) => {
+  try {
+    const { department, level } = req.user; // Get student's department and level from authenticated user
+
+    if (!department || !level) {
+      return res.status(400).json({
+        success: false,
+        message: "Student department or level not found in user data.",
+      });
+    }
+
+    // 1. Find all 'rep' users who belong to the student's department and level.
+    const relevantReps = await User.find({
+      department,
+      level,
+      role: 'rep'
+    }).select('_id');
+
+    const repIds = relevantReps.map(rep => rep._id);
+
+    if (repIds.length === 0) {
+      return res.status(200).json({
+        success: true,
+        count: 0,
+        data: [],
+        message: `No representatives found for your department (${department}) and level (${level}).`
+      });
+    }
+
+    // 2. Find manuals added by these specific representatives that are available.
+    const manuals = await AddManual.find({ addedBy: { $in: repIds }, isAvailable: true })
+      .select("courseCode courseTitle semester price isAvailable printedStock claimedCount availableStock stockStatus")
+      .sort({ courseCode: 1 })
+      .lean();
+
+    return res.status(200).json({ success: true, count: manuals.length, data: manuals });
+  } catch (error) {
+    console.error("[getDepartmentLevelManuals error]", error.message);
+    return res.status(500).json({ success: false, message: "Failed to fetch manuals for your department and level." });
   }
 };
 
@@ -624,6 +666,9 @@ const validateToken = async (req, res) => {
   }
 }
 
+const deleteUserAccount = async() =>{
+}
+
 
 module.exports = {
   userSignup,
@@ -640,7 +685,8 @@ module.exports = {
   searchManual,
   resolveAccountDetail,
   saveAccountDetail,
-  editBankDetails
+  editBankDetails,
+  getDepartmentLevelManuals, // Export the new function
 };
 // http://localhost:3142/api/changePin/6a2c1a43430f7641c6c48926
 

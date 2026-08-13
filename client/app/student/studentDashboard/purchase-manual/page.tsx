@@ -1,5 +1,7 @@
 "use client";
-import React, { useMemo, useState } from "react";
+import React, { useMemo, useState, useEffect } from "react";
+import axios from "axios";
+
 
 type Manual = {
   id: string;
@@ -44,6 +46,36 @@ function formatCurrency(n: number) {
 export default function PurchaseManual() {
   const [selectedId, setSelectedId] = useState<string>("");
   const selected = useMemo(() => MANUALS.find((m) => m.id === selectedId) ?? null, [selectedId]);
+  const [manuals, setManuals] = useState<Manual[]>([]);
+
+    useEffect(() => {
+        const fetchManualData = async () => {
+          try {
+            const baseURL = "http://localhost:5142";
+            const response = await axios.get<Manual | Manual[]>(`${baseURL}/api/student/profile`);
+
+            const manualData = response.data;
+            console.log("fetched manuals:", manualData);
+
+            // Accept either a single Manual object or an array of Manual
+            if (Array.isArray(manualData)) {
+              setManuals(manualData as Manual[]);
+            } else if (manualData && typeof manualData === "object") {
+              setManuals([manualData as Manual]);
+            }
+
+
+          } catch (error) {
+            console.error("Error fetching dashboard data:", error);
+            
+          }
+        };
+    
+        fetchManualData();
+      }, []);
+    
+
+  const options = manuals.length ? manuals : MANUALS;
 
   return (
     <div className="py-2">
@@ -90,7 +122,7 @@ export default function PurchaseManual() {
                     }`}
                   >
                     <option value="">Select a manual...</option>
-                    {MANUALS.map((m) => (
+                    {options.map((m) => (
                       <option key={m.id} value={m.id}>
                         {m.title}
                       </option>

@@ -174,7 +174,7 @@ export default function Dashboard() {
   return (
     <section className="mx-auto w-full max-w-7xl">
       <div className="block lg:flex md:flex items-start justify-between gap-4 lg:py-3">
-        <div>
+          <div className="flex flex-col-reverse lg:flex-row items-start justify-between gap-4 lg:py-3">
           <h1 className="text-3xl font-extrabold text-black">
             {" "}
             Hello, {studentName}
@@ -189,7 +189,7 @@ export default function Dashboard() {
             href="/student/studentDashboard/purchase-manual"
             className="rounded-md bg-rose-600 px-4 my-4 py-2 text-md font-semibold text-white shadow-sm hover:bg-rose-700"
           >
-            + Browse Manuals
+              Browse Manuals
           </a>
         </div>
       </div>
