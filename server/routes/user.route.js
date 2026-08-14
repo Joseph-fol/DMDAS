@@ -1,7 +1,7 @@
 const express = require("express")
 const router = express.Router()
 const { verifyToken, isRep, isStudent } = require("../middleware/auth")
-const {userSignup, userSignin, requestPinReset, requestPinResetByEmail, resetPinWithOTP, addManual, getRepManuals, resetPasswordSetting, editManual, deleteManual, searchManual, resolveAccountDetail, saveAccountDetail, editBankDetails, getDepartmentLevelManuals} = require("../controllers/user.controller")
+const {userSignup, userSignin, requestPinReset, requestPinResetByEmail, resetPinWithOTP, addManual, getRepManuals, resetPasswordSetting, editManual, deleteManual, searchManual, resolveAccountDetail, saveAccountDetail, editBankDetails, getDepartmentLevelManuals, updateProfileSettings} = require("../controllers/user.controller")
 const { initializeTransaction, verifyTransaction, getBankDetails } = require("../controllers/paystack")
 const {uploadProfilePicture} = require("../controllers/uploadProfilePicture")
 
@@ -15,6 +15,8 @@ router.get("/profile", verifyToken, (req, res) => {
     res.status(200).json({ user: req.user });
 });
 router.put("/updatePinSetting", verifyToken, resetPasswordSetting)
+router.put("/updateProfileSetting", verifyToken, updateProfileSettings)
+    
 router.post("/initializeTransaction", verifyToken, initializeTransaction)
 router.post("/paystack/webhook", verifyTransaction)
 router.get("/admin/dashboard", verifyToken, isRep, (req, res) => {

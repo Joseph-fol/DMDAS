@@ -119,6 +119,42 @@ const userSignin = async (req, res) => {
   }
 }
 
+const updateProfileSettings = async (req, res) =>{
+  const userId = req.user._id
+  const { fullName, email, matricNumber, department, phoneNumber, level } = req.body;
+  if (!fullName || !email || !matricNumber || !department || !phoneNumber || !level) {
+    return res.status(400).json({
+      message: "All input fields are required",
+    });
+  }
+
+  try{
+    const userDetail = await User.findById(userId);
+    if(!userDetail){
+      return res.status(404).json({
+        message: "User not found"
+      })
+    }
+    
+    userDetail.fullName = fullName
+    userDetail.email = email
+    userDetail.matricNumber = matricNumber
+    userDetail.department = department
+    userDetail.phoneNumber = phoneNumber
+    userDetail.level = level
+
+    await userDetail.save()
+    return res.status(201).json({
+      message: "User details successfully updated"
+    })
+  } catch(error){
+    return res.status(500).json({
+      message: "Internal Server Error"
+    })
+  }
+
+}
+
 const requestPinReset = async (req, res) => {
   const { matricNumber, email } = req.body;
   if (!matricNumber || !email) {
@@ -676,6 +712,7 @@ module.exports = {
   userSignin,
   requestPinReset,
   requestPinResetByEmail,
+  updateProfileSettings,
   resetPinWithOTP,
   getUserProfile,
   addManual,
