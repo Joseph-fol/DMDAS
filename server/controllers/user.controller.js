@@ -554,8 +554,7 @@ const searchManual = async (req, res) => {
 
 const getDepartmentLevelManuals = async (req, res) => {
   try {
-    const { department, level } = req.user; // Get student's department and level from authenticated user
-
+    const { department, level } = req.user;
     if (!department || !level) {
       return res.status(400).json({
         success: false,
@@ -563,11 +562,14 @@ const getDepartmentLevelManuals = async (req, res) => {
       });
     }
 
-    // 1. Find all 'rep' users who belong to the student's department and level.
+    // 1. Find all 'rep' or 'superRep' users for the student's department.
+    // A 'rep' must match the student's level, but a 'superRep' can be for any level in that department.
     const relevantReps = await User.find({
       department,
-      level,
-      role: 'rep'
+      $or: [
+        { role: 'rep', level: level },
+        { role: 'superRep' }
+      ]
     }).select('_id');
 
     const repIds = relevantReps.map(rep => rep._id);

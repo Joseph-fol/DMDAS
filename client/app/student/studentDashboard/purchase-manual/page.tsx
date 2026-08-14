@@ -50,17 +50,24 @@ export default function PurchaseManual() {
   );
   const [manuals, setManuals] = useState<Manual[]>([]);
 
+  const token = sessionStorage.getItem("token")
+
   useEffect(() => {
     const fetchManualData = async () => {
       try {
         const baseURL = "http://localhost:5142";
         const response = await axios.get<Manual | Manual[]>(
-          `${baseURL}/api/student/availableManuals`,
+          `${baseURL}/api/student/availableManuals`, {
+            headers : {
+              "Authorization": `Bearer ${token}`,
+              "Content-Type" : "application/json"
+            }
+          }
         );
         const manualData = response.data;
         // sessionStorage.setItem("availableManuals", response.data);
 
-        console.log("fetched manuals:", manualData);
+        console.log("Fetched manuals:", manualData);
 
         // Accept either a single Manual object or an array of Manual
         if (Array.isArray(manualData)) {
