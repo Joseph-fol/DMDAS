@@ -191,15 +191,15 @@ export default function Page() {
     setPasswordError(null);
 
     if (!currentPin || !newPin || !confirmNewPin) {
-      setPasswordError("Please fill all password fields.");
+      setPasswordError("Please fill all PIN fields.");
       return;
     }
-    if (newPin.length < 4) {
-      setPasswordError("Password must be at least 4 characters.");
+    if (newPin.length !== 4) {
+      setPasswordError("PIN must be exactly 4 digits.");
       return;
     }
     if (newPin !== confirmNewPin) {
-      setPasswordError("New passwords do not match.");
+      setPasswordError("New PINs do not match.");
       return;
     }
 
@@ -229,16 +229,16 @@ export default function Page() {
       setCurrentPin("");
       setNewPin("");
       setConfirmNewPin("");
-      setPasswordMessage(response.data.message || "Password updated successfully.");
+      setPasswordMessage(response.data.message || "PIN updated successfully.");
     } catch (err) {
       if (axios.isAxiosError(err)) {
         setPasswordError(
           (err.response?.data as { message?: string })?.message ||
             err.message ||
-            "Failed to change password. Sending payload to backend failed."
+            "Failed to change PIN. Sending payload to backend failed."
         );
       } else {
-        setPasswordError(err instanceof Error ? err.message : "Failed to change password.");
+        setPasswordError(err instanceof Error ? err.message : "Failed to change PIN.");
       }
     } finally {
       setIsSubmittingPassword(false);
@@ -496,39 +496,48 @@ export default function Page() {
           {activeTab === "security" && (
             <div className="space-y-6">
               <div className="rounded-2xl border border-slate-200 bg-white p-6">
-                <h3 className="text-lg font-semibold">Change Password</h3>
-                <p className="text-sm text-slate-400">Use a strong, unique password for your account.</p>
+                <h3 className="text-lg font-semibold">Change PIN</h3>
+                <p className="text-sm text-slate-400">Update your 4-digit security PIN.</p>
 
                 <div className="mt-4 space-y-4 max-w-xl">
                   <label className="block">
-                    <div className="text-sm text-slate-600 mb-1 font-medium">Current Password</div>
+                    <div className="text-sm text-slate-600 mb-1 font-medium">Current PIN</div>
                     <input
                       type="password"
+                      inputMode="numeric"
+                      pattern="[0-9]*"
+                      maxLength={4}
                       value={currentPin}
-                      onChange={(e) => setCurrentPin(e.target.value)}
-                      placeholder="Enter current password"
+                      onChange={(e) => setCurrentPin(e.target.value.replace(/\D/g, "").slice(0, 4))}
+                      placeholder="Enter 4-digit current PIN"
                       className="w-full rounded-xl border border-slate-300 px-4 py-3 text-sm outline-none focus:border-rose-500"
                     />
                   </label>
 
                   <label className="block">
-                    <div className="text-sm text-slate-600 mb-1 font-medium">New Password</div>
+                    <div className="text-sm text-slate-600 mb-1 font-medium">New PIN</div>
                     <input
                       type="password"
+                      inputMode="numeric"
+                      pattern="[0-9]*"
+                      maxLength={4}
                       value={newPin}
-                      onChange={(e) => setNewPin(e.target.value)}
-                      placeholder="At least 4 characters"
+                      onChange={(e) => setNewPin(e.target.value.replace(/\D/g, "").slice(0, 4))}
+                      placeholder="Enter 4-digit new PIN"
                       className="w-full rounded-xl border border-slate-300 px-4 py-2 text-sm outline-none focus:border-rose-500"
                     />
                   </label>
 
                   <label className="block">
-                    <div className="text-sm text-slate-600 mb-1 font-medium">Confirm New Password</div>
+                    <div className="text-sm text-slate-600 mb-1 font-medium">Confirm New PIN</div>
                     <input
                       type="password"
+                      inputMode="numeric"
+                      pattern="[0-9]*"
+                      maxLength={4}
                       value={confirmNewPin}
-                      onChange={(e) => setConfirmNewPin(e.target.value)}
-                      placeholder="Re-enter new password"
+                      onChange={(e) => setConfirmNewPin(e.target.value.replace(/\D/g, "").slice(0, 4))}
+                      placeholder="Re-enter 4-digit new PIN"
                       className="w-full rounded-xl border border-slate-300 px-4 py-2 text-sm outline-none focus:border-rose-500"
                     />
                   </label>
@@ -551,7 +560,7 @@ export default function Page() {
                       disabled={isSubmittingPassword}
                       className="rounded-md bg-rose-600 hover:bg-rose-700 text-white px-6 py-2.5 font-semibold transition disabled:opacity-50 cursor-pointer"
                     >
-                      {isSubmittingPassword ? "Sending Request..." : "Update Password"}
+                      {isSubmittingPassword ? "Updating..." : "Update PIN"}
                     </button>
                   </div>
                 </div>
