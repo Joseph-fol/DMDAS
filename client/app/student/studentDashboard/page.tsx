@@ -136,8 +136,9 @@ export default function Dashboard() {
 
       try {
         const baseURL = "http://localhost:5142";
+        // Use the same backend route as other pages (my-profile-settings)
         const response = await axios.get<UserProfile>(
-          `${baseURL}/api/profile`,
+          `${baseURL}/api/student/profile`,
           {
             headers: {
               Authorization: `Bearer ${token}`,
@@ -148,22 +149,39 @@ export default function Dashboard() {
         const userData = response.data;
         setProfile(userData);
 
-        const nameToSet = userData.fullName;
+        const nameToSet = userData?.fullName;
         if (nameToSet) {
           const nameParts = nameToSet.split(" ");
-          setStudentName(nameParts[1] || nameParts[0]);
+          setStudentName(nameParts[0]);
         } else {
           setStudentName("Student");
         }
       } catch (error) {
         console.error("Error fetching dashboard data:", error);
+
+        // If API call fails, try to read basic user info from sessionStorage
+        try {
+          const userDetails = sessionStorage.getItem("Student");
+          if (userDetails) {
+            const parsed = JSON.parse(userDetails);
+            const nameParts = (parsed.fullName || parsed.name || "").split(" ");
+            setStudentName(nameParts[0] || "Student");
+            setProfile({
+              fullName: parsed.fullName || parsed.name || "",
+              email: parsed.email || "",
+              department: parsed.department || "",
+              level: parsed.level || "",
+              phoneNumber: parsed.phoneNumber || parsed.whatsapp || "",
+              role: parsed.role || "",
+            });
+          }
+        } catch (e) {
+          // ignore parse errors
+        }
+
         if (axios.isAxiosError(error) && error.response?.status === 401) {
-          // Token is invalid, expired, or altered.
-          // Clear session and redirect to signin.
           sessionStorage.removeItem("token");
           router.push("/signin");
-        } else {
-          // Handle other errors, e.g., show a generic error message
         }
       }
     };
@@ -174,7 +192,7 @@ export default function Dashboard() {
   return (
     <section className="mx-auto w-full max-w-7xl">
       <div className="block lg:flex md:flex items-start justify-between gap-4 lg:py-3">
-          <div className="flex flex-col-reverse lg:flex-row items-start justify-between gap-4 lg:py-3">
+        <div className=" lg:flex-row items-start justify-between gap-4 lg:py-3">
           <h1 className="text-3xl font-extrabold text-black">
             {" "}
             Hello, {studentName}
@@ -189,7 +207,7 @@ export default function Dashboard() {
             href="/student/studentDashboard/purchase-manual"
             className="rounded-md bg-rose-600 px-4 my-4 py-2 text-md font-semibold text-white shadow-sm hover:bg-rose-700"
           >
-              Browse Manuals
+            Browse Manuals
           </a>
         </div>
       </div>
@@ -267,7 +285,12 @@ export default function Dashboard() {
           <div className="rounded-2xl border border-slate-200 bg-white p-4">
             <div className="flex items-center justify-between">
               <h3 className="text-lg font-semibold">Recent Payments</h3>
-              <a href="/student/studentDashboard/transaction-history" className="text-sm font-medium text-rose-600">View all</a>
+              <a
+                href="/student/studentDashboard/transaction-history"
+                className="text-sm font-medium text-rose-600"
+              >
+                View all
+              </a>
             </div>
 
             <div className="mt-4 overflow-hidden">

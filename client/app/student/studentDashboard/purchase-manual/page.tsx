@@ -58,6 +58,7 @@ export default function PurchaseManual() {
           `${baseURL}/api/student/availableManuals`,
         );
         const manualData = response.data;
+        // sessionStorage.setItem("availableManuals", response.data);
 
         console.log("fetched manuals:", manualData);
 

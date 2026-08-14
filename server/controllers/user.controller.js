@@ -110,6 +110,7 @@ const userSignin = async (req, res) => {
       level: foundUser.level,
       department: foundUser.department,
       role: foundUser.role,
+      phoneNumber: foundUser.phoneNumber,
       token,
     });
   } catch (error) {
@@ -437,7 +438,7 @@ const getRepManuals = async (req, res) => {
   try {
     const manuals = await AddManual.find({ addedBy: req.user._id })
       .select("courseCode courseTitle semester price isAvailable printedStock claimedCount availableStock stockStatus")
-      .populate('addedBy', 'fullName email phoneNumber'); // Populate only relevant user fields
+      .populate('addedBy', 'fullName email phoneNumber department'); // Populate only relevant user fields
 
     if (manuals.length === 0) {
       console.log("No manuals found for this representative.");
@@ -463,7 +464,7 @@ const searchManual = async (req, res) => {
   try {
     const q = req.body.q ?? req.query.q ?? "";
     const semester = req.body.semester ?? req.query.semester;
-    const { department, level } = req.user; // The student's department and level
+    const { department, level } = req.user; 
 
     // 1. Find all 'rep' users who belong to the student's department and level.
     const repsInDepartment = await User.find({ department, level, role: 'rep' }).select('_id');

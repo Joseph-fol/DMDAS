@@ -9,7 +9,9 @@ require("dotenv").config();
 
 app.use(express.urlencoded({ extended: true }));
 app.use(express.json());
+
 app.use(cors());
+
 const URI = process.env.MONGO_URI;
 
 const dns = require("node:dns");

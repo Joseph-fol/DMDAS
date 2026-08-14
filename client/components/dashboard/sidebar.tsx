@@ -168,7 +168,7 @@ export default function DashboardSidebar({
               <Link
                 key={item.href}
                 href={item.href}
-                className={`flex items-center gap-3 rounded-xl border px-3 py-2 text-[16px] font-semibold transition ${isActive ? "border-[#FDF8F9] bg-[#FDE7ED] text-[#C70036]" : "border-transparent text-slate-600 hover:border-slate-200 hover:bg-[#FDF8F9] hover:text-slate-900"}`}
+                className={`flex items-center gap-3 rounded-xl border px-3 py-2 text-[15px] font-semibold transition ${isActive ? "border-[#FDF8F9] bg-[#FDE7ED] text-[#C70036]" : "border-transparent text-slate-600 hover:border-slate-200 hover:bg-[#FDF8F9] hover:text-slate-900"}`}
                 onClick={() => setIsSidebarOpen(false)}
                 aria-current={isActive ? "page" : undefined}
               >
