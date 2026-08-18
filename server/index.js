@@ -31,8 +31,14 @@ mongoose.connect(URI)
     console.log("Server did not start due to MongoDB connection failure.");
   });
 
-app.use("/api", checkInternetConnection, userRoute);
+app.get('/', (req, res) => {
+    return res.status(200).json({ 
+        status: "success", 
+        message: "The backend server is alive and responding!" 
+    });
+});
 
+app.use("/api", checkInternetConnection, userRoute);
 app.use((err, req, res, next) => {
   if (err instanceof SyntaxError && err.status === 400 && 'body' in err) {
     console.error('Bad JSON payload:', err.message);
@@ -47,9 +53,3 @@ app.use((req, res) => {
     error: "Route not found",
   });
 });
-
-app.get("/test", (req, res) =>{
-  res.json({
-    message: "Backend is fully working"
-  })
-})
