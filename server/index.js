@@ -13,7 +13,6 @@ app.use(express.json());
 app.use(cors());
 
 const URI = process.env.MONGO_URI;
-
 const dns = require("node:dns");
 const port = process.env.PORT || 5000;
 
@@ -32,10 +31,8 @@ mongoose.connect(URI)
     console.log("Server did not start due to MongoDB connection failure.");
   });
 
-// Mount the API routes before the error handlers
 app.use("/api", checkInternetConnection, userRoute);
 
-// Error handling middleware for JSON parsing errors
 app.use((err, req, res, next) => {
   if (err instanceof SyntaxError && err.status === 400 && 'body' in err) {
     console.error('Bad JSON payload:', err.message);
@@ -50,3 +47,9 @@ app.use((req, res) => {
     error: "Route not found",
   });
 });
+
+app.get("test", (req, res) =>{
+  res.json({
+    message: "Backend is fully working"
+  })
+})
