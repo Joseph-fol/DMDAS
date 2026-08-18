@@ -48,7 +48,7 @@ app.use((req, res) => {
   });
 });
 
-app.get("test", (req, res) =>{
+app.get("/test", (req, res) =>{
   res.json({
     message: "Backend is fully working"
   })
