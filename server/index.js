@@ -15,7 +15,7 @@ app.use(cors());
 const URI = process.env.MONGO_URI;
 
 const dns = require("node:dns");
-const port = process.env.PORT;
+const port = process.env.PORT || 5000;
 
 dns.setDefaultResultOrder("ipv4first");
 dns.setServers(["8.8.8.8", "8.8.4.4"]);

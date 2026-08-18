@@ -119,7 +119,7 @@ const userSignin = async (req, res) => {
   }
 }
 
-const updateProfileSettings = async (req, res) =>{
+const updateProfileSettings = async (req, res) => {
   const userId = req.user._id
   const { fullName, email, matricNumber, department, phoneNumber, level } = req.body;
   if (!fullName || !email || !matricNumber || !department || !phoneNumber || !level) {
@@ -128,14 +128,14 @@ const updateProfileSettings = async (req, res) =>{
     });
   }
 
-  try{
+  try {
     const userDetail = await User.findById(userId);
-    if(!userDetail){
+    if (!userDetail) {
       return res.status(404).json({
         message: "User not found"
       })
     }
-    
+
     userDetail.fullName = fullName
     userDetail.email = email
     userDetail.matricNumber = matricNumber
@@ -147,7 +147,7 @@ const updateProfileSettings = async (req, res) =>{
     return res.status(201).json({
       message: "User details successfully updated"
     })
-  } catch(error){
+  } catch (error) {
     return res.status(500).json({
       message: "Internal Server Error"
     })
@@ -500,7 +500,7 @@ const searchManual = async (req, res) => {
   try {
     const q = req.body.q ?? req.query.q ?? "";
     const semester = req.body.semester ?? req.query.semester;
-    const { department, level } = req.user; 
+    const { department, level } = req.user;
 
     // 1. Find all 'rep' users who belong to the student's department and level.
     const repsInDepartment = await User.find({ department, level, role: 'rep' }).select('_id');
@@ -516,9 +516,11 @@ const searchManual = async (req, res) => {
 
       if (q && q.trim().length > 0) {
         const searchTerm = q.trim();
-        const searchRegex = new RegExp(searchTerm, "i");
 
-        query.$or = [{ courseCode: searchRegex }, { courseTitle: searchRegex }];
+        query.$or = [
+          { courseCode: { $regex: searchTerm, $options: 'i' } },
+          { courseTitle: { $regex: searchTerm, $options: 'i' } }
+        ];
       }
 
       if (semester) {
@@ -562,13 +564,15 @@ const getDepartmentLevelManuals = async (req, res) => {
       });
     }
 
-    // 1. Find all 'rep' or 'superRep' users for the student's department.
-    // A 'rep' must match the student's level, but a 'superRep' can be for any level in that department.
+    const sanitizedLevel = level.match(/\d+/)?.[0] || level;
+
+    // console.log(`[getDepartmentLevelManuals Debug] Querying for Department: '${department}', Level: '${sanitizedLevel}'`);
+
     const relevantReps = await User.find({
-      department,
+      department: { $regex: `^${department}$`, $options: 'i' },
       $or: [
-        { role: 'rep', level: level },
-        { role: 'superRep' }
+        { role: 'rep', level: sanitizedLevel },
+        { role: 'superRep', level: sanitizedLevel }
       ]
     }).select('_id');
 
@@ -585,7 +589,8 @@ const getDepartmentLevelManuals = async (req, res) => {
 
     // 2. Find manuals added by these specific representatives that are available.
     const manuals = await AddManual.find({ addedBy: { $in: repIds }, isAvailable: true })
-      .select("courseCode courseTitle semester price isAvailable printedStock claimedCount availableStock stockStatus")
+      .select("courseCode courseTitle semester price isAvailable printedStock claimedCount availableStock stockStatus addedBy")
+      .populate('addedBy', 'fullName phoneNumber level department')
       .sort({ courseCode: 1 })
       .lean();
 
@@ -628,7 +633,7 @@ const resolveAccountDetail = async (req, res) => {
         },
       }
     );
-    
+
     const data = await response.json();
     if (!data.status) {
       if ((data.message || "").toLowerCase().includes("could not resolve account")) {
@@ -668,7 +673,7 @@ const saveAccountDetail = async (req, res) => {
     if (!user) {
       return res.status(404).json({ message: "User not found." });
     }
-    
+
     const banksData = await fetchPaystackBanks();
 
     const bank = banksData.find(b => b.name.toLowerCase() === bankName.toLowerCase());
@@ -693,7 +698,7 @@ const saveAccountDetail = async (req, res) => {
 
 const editBankDetails = async (req, res) => {
   const repId = req.user._id;
-  const {accountNumber, account } = req.body
+  const { accountNumber, account } = req.body
 }
 
 const validateToken = async (req, res) => {
@@ -705,7 +710,7 @@ const validateToken = async (req, res) => {
   }
 }
 
-const deleteUserAccount = async() =>{
+const deleteUserAccount = async () => {
 }
 
 

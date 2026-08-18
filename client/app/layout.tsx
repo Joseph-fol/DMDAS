@@ -1,5 +1,6 @@
 import type { Metadata } from "next";
 import "./globals.css";
+import { satoshi } from "./fonts";
 
 export const metadata: Metadata = {
   title: "DMDAS",
@@ -12,7 +13,7 @@ export default function RootLayout({
   children: React.ReactNode;
 }>) {
   return (
-    <html lang="en">
+    <html lang="en" className={satoshi.className}>
       <body>{children}</body>
     </html>
   );
