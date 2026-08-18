@@ -134,9 +134,8 @@ export default function Dashboard() {
         return;
       }
 
-      try {
-        const baseURL = "http://localhost:5142";
-        // Use the same backend route as other pages (my-profile-settings)
+      try {2
+        const baseURL = process.env.NEXT_PUBLIC_API_URL;
         const response = await axios.get<UserProfile>(
           `${baseURL}/api/student/profile`,
           {
