@@ -49,23 +49,21 @@ export default function PurchaseManual() {
     [selectedId],
   );
   const [manuals, setManuals] = useState<Manual[]>([]);
-
-  const token = sessionStorage.getItem("token")
+  const token =
+    typeof window !== "undefined" ? sessionStorage.getItem("token") : null;
 
   useEffect(() => {
     const fetchManualData = async () => {
       try {
-        const baseURL = "http://localhost:5142";
-        const response = await axios.get(
-          `${baseURL}/api/student/availableManuals`, {
-            headers : {
-              "Authorization": `Bearer ${token}`,
-              "Content-Type" : "application/json"
-            }
-          }
-        );
+        const baseURL = process.env.NEXT_PUBLIC_API_URL;
+        const response = await axios.get(`${baseURL}/api/student/availableManuals`, {
+          headers: {
+            Authorization: `Bearer ${token}`,
+            "Content-Type": "application/json",
+          },
+        });
         const { data } = response;
-        const manualData = data.data;  
+        const manualData = data.data;
         console.log("Fetched manuals:", manualData);
 
         if (Array.isArray(manualData)) {
@@ -74,12 +72,12 @@ export default function PurchaseManual() {
           setManuals([manualData as Manual]);
         }
       } catch (error) {
-        console.error("Error fetching dashboard data:", error);
+        console.error("Error fetching manual data:", error);
       }
     };
 
     fetchManualData();
-  }, []);
+  }, [token]);
 
   const options = manuals.length ? manuals : MANUALS;
 
@@ -96,9 +94,8 @@ export default function PurchaseManual() {
           </p>
         </div>
 
-        {/* Stepper */}
         <div className="bg-white rounded-xl shadow-sm p-4 mb-6 overflow-x-auto">
-          <div className="flex items-center gap-6 min-w-[640px]">
+          <div className="flex items-center gap-6 min-w-160">
             <div className="flex items-center gap-4 whitespace-nowrap">
               <div className="flex items-center justify-center w-10 h-10 rounded-full bg-red-500 text-white font-medium">
                 1
@@ -122,7 +119,6 @@ export default function PurchaseManual() {
           </div>
         </div>
 
-        {/* Main grid */}
         <div className="grid grid-cols-1 md:grid-cols-12 gap-6">
           <div className="col-span-1 md:col-span-8">
             <div className="bg-white rounded-xl shadow-sm p-6">
@@ -139,9 +135,7 @@ export default function PurchaseManual() {
                     value={selectedId}
                     onChange={(e) => setSelectedId(e.target.value)}
                     className={`w-full rounded-lg p-3 text-sm text-slate-700 focus:ring-0 outline-none ${
-                      selected
-                        ? "border-2 border-red-300"
-                        : "border border-slate-200"
+                      selected ? "border-2 border-red-300" : "border border-slate-200"
                     }`}
                   >
                     <option value="">Select a manual...</option>
@@ -186,51 +180,50 @@ export default function PurchaseManual() {
                   </div>
                 )}
               </div>
-            </div>
 
-            {/* Step 2: Payment (hidden until manual selected) */}
-            {selected && (
-              <div className="bg-white rounded-xl shadow-sm p-6 mt-6">
-                <h3 className="text-lg font-semibold text-slate-800">
-                  Step 2 — Pay with Paystack
-                </h3>
-                <p className="mt-2 text-sm text-slate-600">
-                  Secure payment powered by Paystack. Supports card, bank
-                  transfer, and USSD. Your keycode is issued immediately after
-                  payment.
-                </p>
+              {selected && (
+                <div className="bg-white rounded-xl shadow-sm p-6 mt-6">
+                  <h3 className="text-lg font-semibold text-slate-800">
+                    Step 2 — Pay with Paystack
+                  </h3>
+                  <p className="mt-2 text-sm text-slate-600">
+                    Secure payment powered by Paystack. Supports card, bank
+                    transfer, and USSD. Your keycode is issued immediately after
+                    payment.
+                  </p>
 
-                <div className="mt-6 bg-slate-50 rounded-md p-4 flex items-center justify-between">
-                  <div>
-                    <div className="text-xs text-slate-400">Amount to Pay</div>
-                    <div className="mt-2 text-2xl font-bold text-slate-900">
-                      {formatCurrency(selected.price)}
+                  <div className="mt-6 bg-slate-50 rounded-md p-4 flex items-center justify-between">
+                    <div>
+                      <div className="text-xs text-slate-400">Amount to Pay</div>
+                      <div className="mt-2 text-2xl font-bold text-slate-900">
+                        {formatCurrency(selected.price)}
+                      </div>
+                    </div>
+
+                    <div className="text-sm text-slate-500 text-right">
+                      <div className="text-xs">Manual</div>
+                      <div className="font-medium">{selected.code}</div>
                     </div>
                   </div>
 
-                  <div className="text-sm text-slate-500 text-right">
-                    <div className="text-xs">Manual</div>
-                    <div className="font-medium">{selected.code}</div>
+                  <div className="mt-6">
+                    <button
+                      className="w-full rounded-lg py-3 text-white font-medium bg-linear-to-r from-cyan-500 to-blue-500"
+                    >
+                      Pay {formatCurrency(selected.price)} with Paystack
+                    </button>
+                  </div>
+
+                  <div className="mt-4 text-xs text-slate-400 flex items-center justify-center gap-4">
+                    <div>🔒 SSL Encrypted</div>
+                    <div>·</div>
+                    <div>PCI DSS Compliant</div>
+                    <div>·</div>
+                    <div>Instant Keycode</div>
                   </div>
                 </div>
-
-                <div className="mt-6">
-                  <button
-                    className={`w-full rounded-lg py-3 text-white font-medium bg-gradient-to-r from-cyan-500 to-blue-500`}
-                  >
-                    Pay {formatCurrency(selected.price)} with Paystack
-                  </button>
-                </div>
-
-                <div className="mt-4 text-xs text-slate-400 flex items-center justify-center gap-4">
-                  <div>🔒 SSL Encrypted</div>
-                  <div>·</div>
-                  <div>PCI DSS Compliant</div>
-                  <div>·</div>
-                  <div>Instant Keycode</div>
-                </div>
-              </div>
-            )}
+              )}
+            </div>
           </div>
 
           <div className="col-span-1 md:col-span-4 space-y-6 md:sticky md:top-28">
@@ -238,20 +231,16 @@ export default function PurchaseManual() {
               <h4 className="font-semibold text-slate-800">How it works</h4>
               <ul className="mt-3 space-y-3 text-sm text-slate-600">
                 <li className="flex items-start gap-3">
-                  <span className="text-slate-400">📚</span> Select your manual
-                  from the list
+                  <span className="text-slate-400">📚</span> Select your manual from the list
                 </li>
                 <li className="flex items-start gap-3">
-                  <span className="text-slate-400">💳</span> Pay securely via
-                  Paystack
+                  <span className="text-slate-400">💳</span> Pay securely via Paystack
                 </li>
                 <li className="flex items-start gap-3">
-                  <span className="text-slate-400">🔑</span> Get your keycode
-                  instantly
+                  <span className="text-slate-400">🔑</span> Get your keycode instantly
                 </li>
                 <li className="flex items-start gap-3">
-                  <span className="text-slate-400">📦</span> Present keycode to
-                  collect manual
+                  <span className="text-slate-400">📦</span> Present keycode to collect manual
                 </li>
               </ul>
             </div>
@@ -259,9 +248,7 @@ export default function PurchaseManual() {
             <div className="bg-white rounded-xl shadow-sm p-4">
               <h4 className="font-semibold text-slate-800">Payment Methods</h4>
               <ul className="mt-3 space-y-2 text-sm text-slate-600">
-                <li className="flex items-center gap-3">
-                  💳 Debit / Credit Card
-                </li>
+                <li className="flex items-center gap-3">💳 Debit / Credit Card</li>
                 <li className="flex items-center gap-3">🏦 Bank Transfer</li>
                 <li className="flex items-center gap-3">📲 USSD</li>
               </ul>
@@ -271,10 +258,8 @@ export default function PurchaseManual() {
               <div className="flex items-start gap-3">
                 <div className="text-yellow-600">🔑</div>
                 <div>
-                  <div className="text-sm">
-                    Your keycode is generated the moment payment is confirmed —
-                    no manual approval needed. No waiting.
-                  </div>
+                  Your keycode is generated the moment payment is confirmed — no
+                  manual approval needed. No waiting.
                 </div>
               </div>
             </div>
