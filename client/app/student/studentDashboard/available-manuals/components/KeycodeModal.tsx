@@ -42,7 +42,7 @@ export const KeycodeModal: React.FC<KeycodeModalProps> = ({ manual, onClose }) =
               <h2 className="text-xl font-extrabold text-slate-900 tracking-tight">
                 My Keycode
               </h2>
-              <p className="text-xs text-slate-500 mt-1">
+              <p className="text-sm text-slate-500 mt-1">
                 Present this to your Course Representative to collect your manual.
               </p>
             </div>

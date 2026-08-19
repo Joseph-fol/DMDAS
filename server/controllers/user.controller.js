@@ -565,9 +565,6 @@ const getDepartmentLevelManuals = async (req, res) => {
     }
 
     const sanitizedLevel = level.match(/\d+/)?.[0] || level;
-
-    // console.log(`[getDepartmentLevelManuals Debug] Querying for Department: '${department}', Level: '${sanitizedLevel}'`);
-
     const relevantReps = await User.find({
       department: { $regex: `^${department}$`, $options: 'i' },
       $or: [
