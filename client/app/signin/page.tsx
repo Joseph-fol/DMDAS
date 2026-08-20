@@ -66,7 +66,7 @@ export default function Signin() {
       pin: values.pin,
     };
 
-    const baseURL = "http://localhost:5142";
+    const baseURL = process.env.NEXT_PUBLIC_API_URL;
     try {
       const response = await axios.post<{ message?: string; token?: string }>(
         `${baseURL}/api/signin`,
