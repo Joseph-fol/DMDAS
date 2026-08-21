@@ -120,7 +120,8 @@ export default function Page() {
     setProfileError(null);
     setIsSubmittingProfile(true);
 
-    const baseURL = "http://localhost:5142";
+    // const baseURL = "process.env.NEXT_PUBLIC_API_URL";
+    const baseURL = "https://dmdas.vercel.app";
     const token = typeof window !== "undefined" ? sessionStorage.getItem("token") : null;
 
     const payload = {
@@ -204,7 +205,8 @@ export default function Page() {
     }
 
     setIsSubmittingPassword(true);
-    const baseURL = "http://localhost:5142";
+    // const baseURL = "process.env.NEXT_PUBLIC_API_URL";
+    const baseURL = "https://dmdas.vercel.app";
     const token = typeof window !== "undefined" ? sessionStorage.getItem("token") : null;
 
     const payload = {

@@ -66,7 +66,8 @@ export default function Signin() {
       pin: values.pin,
     };
 
-    const baseURL = process.env.NEXT_PUBLIC_API_URL;
+    // const baseURL = process.env.NEXT_PUBLIC_API_URL;
+    const baseURL = "https://dmdas.vercel.app";
     try {
       const response = await axios.post<{ message?: string; token?: string }>(
         `${baseURL}/api/signin`,

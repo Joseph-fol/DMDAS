@@ -15,6 +15,7 @@ type UserProfile = {
   purchasedManuals?: number; // Or a more specific type
   availableManuals?: number;
 };
+
 const stats = [
   {
     label: "Available Manuals",
@@ -135,7 +136,8 @@ export default function Dashboard() {
       }
 
       try {2
-        const baseURL = process.env.NEXT_PUBLIC_API_URL;
+        // const baseURL = process.env.NEXT_PUBLIC_API_URL;
+        const baseURL = "https://dmdas.vercel.app";
         const response = await axios.get<UserProfile>(
           `${baseURL}/api/student/profile`,
           {

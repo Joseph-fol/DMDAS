@@ -1,6 +1,12 @@
 "use client";
 
 import { usePathname } from "next/navigation";
+import { useState } from "react";
+
+type StudentProfile = {
+  fullName: string;
+  role: string;
+};
 
 type DashboardNavbarProps = {
   isSidebarOpen: boolean;
@@ -18,6 +24,38 @@ export default function DashboardNavbar({ isSidebarOpen, setIsSidebarOpen }: Das
   else if (pathname.includes("my-profile-settings")) title = "Profile";
   else title = "Dashboard";
 
+  const [studentName, setStudentName] = useState("");
+  const [profile, setProfile] = useState<StudentProfile>(() => {
+    try {
+      const userDetails = typeof window !== "undefined" ? sessionStorage.getItem("Student") : null;
+
+      if (userDetails) {
+        const parsedData = JSON.parse(userDetails);
+        const nameToSet = parsedData.fullName;
+        const nameParts = nameToSet.split(" ")[0]
+
+        return {
+          fullName: nameParts || "",
+          role: parsedData.role || "",
+
+        } as StudentProfile;
+      } else {
+        setStudentName("Student");
+      }
+
+    } catch {
+      // ignore parse errors
+    }
+
+    return {
+      fullName: "",
+      role: "",
+    };
+  });
+
+  // Derive initials for avatar
+  const initials = (studentName || "").split(" ").map((s) => s[0]).slice(0, 2).join("").toUpperCase() || "ST";
+
   return (
     <header className="sticky top-0 z-20 border-b border-slate-200/80 bg-white/95 px-4 py-3 backdrop-blur sm:px-6 lg:px-8">
       <div className="flex w-full items-center justify-between gap-3">
@@ -28,7 +66,7 @@ export default function DashboardNavbar({ isSidebarOpen, setIsSidebarOpen }: Das
             className="inline-flex h-8 w-8 items-center justify-center rounded-md border border-transparent bg-white text-slate-600 transition hover:border-slate-200 hover:bg-slate-50 lg:hidden"
             onClick={() => setIsSidebarOpen(!isSidebarOpen)}
           >
-            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" className="h-4 w-4" aria-hidden="true"><path d="M4 7h16"/><path d="M4 12h16"/><path d="M4 17h10"/></svg>
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" className="h-4 w-4" aria-hidden="true"><path d="M4 7h16" /><path d="M4 12h16" /><path d="M4 17h10" /></svg>
           </button>
 
           <h2 className="text-sm font-semibold text-slate-800 sm:text-base">{title}</h2>
@@ -48,10 +86,10 @@ export default function DashboardNavbar({ isSidebarOpen, setIsSidebarOpen }: Das
           </button>
 
           <div className="flex items-center gap-3">
-            <div className="inline-flex h-8 w-8 items-center justify-center rounded-full bg-rose-600 text-white font-semibold">M</div>
+            <div className="inline-flex h-8 w-8 items-center justify-center rounded-full bg-rose-600 text-white font-semibold">{initials}</div>
             <div className="hidden min-w-0 flex-col leading-tight sm:flex">
-              <span className="text-sm font-semibold">Michael O.</span>
-              <span className="text-xs text-slate-500">Student</span>
+              <span className="text-sm font-semibold">{studentName}</span>
+              <span className="text-xs text-slate-500">{profile.role}</span>
             </div>
           </div>
         </div>

@@ -123,7 +123,8 @@ export default function PurchaseManual() {
     const fetchManualData = async () => {
       try {
         setIsLoading(true);
-        const baseURL = process.env.NEXT_PUBLIC_API_URL;
+        // const baseURL = process.env.NEXT_PUBLIC_API_URL;
+        const baseURL = "https://dmdas.vercel.app";
         const response = await axios.get(`${baseURL}/api/student/availableManuals`, {
           headers: {
             Authorization: `Bearer ${token}`,

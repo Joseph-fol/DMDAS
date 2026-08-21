@@ -68,7 +68,8 @@ export default function Signup() {
 
     const payload = {...values, whatsapp: values.phoneNumber,};
     console.log("Registration payload:", payload);
-    const baseURL = process.env.NEXT_PUBLIC_API_URL;
+    // const baseURL = process.env.NEXT_PUBLIC_API_URL;
+    const baseURL = "https://dmdas.vercel.app";
     try {
       const response = await axios.post<{ message?: string }>(`${baseURL}/api/signup`, payload);
       const data = response.data;

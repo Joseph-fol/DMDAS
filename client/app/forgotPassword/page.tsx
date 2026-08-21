@@ -92,7 +92,8 @@ export default function ForgotPassword() {
       email: values.email,
     };
 
-    const baseURL = "http://localhost:5142";
+    // const baseURL = "http://localhost:5142";
+    const baseURL = "https://dmdas.vercel.app";
     try {
       const response = await axios.post<{ message?: string }>(
         `${baseURL}/api/requestPin`,
