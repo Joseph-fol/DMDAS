@@ -6,7 +6,7 @@ import { usePathname } from "next/navigation";
 const navigationItems = [
   {
     label: "Dashboard",
-    href: "/student/studentDashboard",
+    href: "/dashboard",
     icon: (
       <svg
         viewBox="0 0 24 24"
@@ -27,7 +27,7 @@ const navigationItems = [
   },
   {
     label: "My Manuals",
-    href: "/student/studentDashboard/available-manuals",
+    href: "/available-manuals",
     icon: (
       <svg
         viewBox="0 0 24 24"
@@ -47,7 +47,7 @@ const navigationItems = [
 
   {
     label: "Purchase Manual",
-    href: "/student/studentDashboard/purchase-manual",
+    href: "/purchase-manual",
     icon: (
       <svg
         xmlns="http://www.w3.org/2000/svg"
@@ -75,7 +75,7 @@ const navigationItems = [
 
   {
     label: "Payments",
-    href: "/student/studentDashboard/transaction-history",
+    href: "/transaction-history",
     icon: (
       <svg
         viewBox="0 0 24 24"
@@ -94,7 +94,7 @@ const navigationItems = [
   },
   {
     label: "Profile",
-    href: "/student/studentDashboard/my-profile-settings",
+    href: "/my-profile-settings",
     icon: (
       <svg
         viewBox="0 0 24 24"

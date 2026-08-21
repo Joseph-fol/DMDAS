@@ -89,7 +89,7 @@ export default function Signin() {
         sessionStorage.setItem("Student", JSON.stringify(userData));
       }
 
-      setTimeout(() => router.push("/student/studentDashboard"), 1000);
+      setTimeout(() => router.push("/dashboard"), 1000);
     } catch (error) {
       if (axios.isAxiosError(error)) {
         setErrorMessage(

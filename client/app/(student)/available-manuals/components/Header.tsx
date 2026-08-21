@@ -2,6 +2,7 @@
 
 import React from 'react';
 import { ShoppingBag } from 'lucide-react';
+import Link from 'next/link';
 
 interface HeaderProps {
   onPurchaseClick: () => void;
@@ -19,13 +20,13 @@ export const Header: React.FC<HeaderProps> = () => {
         </p>
       </div>
       <div>
-        <a
-          href= "/student/studentDashboard/purchase-manual"
+        <Link
+          href= "/purchase-manual"
           className="inline-flex items-center justify-center gap-2 bg-[#E51749] hover:bg-[#D0103F] text-white font-semibold text-sm px-5 py-2.5 rounded-lg shadow-sm hover:shadow transition-all active:scale-[0.98] w-full sm:w-auto"
         >
           <ShoppingBag className="w-4 h-4 hidden" />
           <span>Purchase Manual</span>
-        </a>
+        </Link>
       </div>
     </header>
   );

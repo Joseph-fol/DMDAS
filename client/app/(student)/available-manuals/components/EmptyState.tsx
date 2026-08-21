@@ -2,6 +2,7 @@
 
 import React from 'react';
 import { Inbox } from 'lucide-react';
+import Link from 'next/link';
 
 interface EmptyStateProps {
   onBrowse: () => void;
@@ -24,12 +25,12 @@ export const EmptyState: React.FC<EmptyStateProps> = ({ onBrowse }) => {
       </p>
 
       {/* Action Button */}
-      <a
-        href= "/student/studentDashboard/purchase-manual"
+      <Link
+        href= "/purchase-manual"
         className="bg-[#E51749] hover:bg-[#D0103F] active:scale-[0.98] text-white font-medium px-4 py-2 rounded-lg text-xs shadow-xs transition-all"
       >
         Browse Manuals
-      </a>
+      </Link>
     </div>
   );
 };

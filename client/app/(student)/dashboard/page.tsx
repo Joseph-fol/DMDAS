@@ -1,6 +1,7 @@
 "use client";
 
 import axios from "axios";
+import Link from "next/link";
 import { useRouter } from "next/navigation";
 // import { useRouter } from "next/router";
 import { useEffect, useState } from "react";
@@ -204,12 +205,12 @@ export default function Dashboard() {
         </div>
 
         <div className="flex items-center gap-4">
-          <a
-            href="/student/studentDashboard/purchase-manual"
+          <Link
+            href="/purchase-manual"
             className="rounded-md bg-rose-600 px-4 my-4 py-2 text-md font-semibold text-white shadow-sm hover:bg-rose-700"
           >
             Browse Manuals
-          </a>
+          </Link>
         </div>
       </div>
 
@@ -286,12 +287,12 @@ export default function Dashboard() {
           <div className="rounded-2xl border border-slate-200 bg-white p-4">
             <div className="flex items-center justify-between">
               <h3 className="text-lg font-semibold">Recent Payments</h3>
-              <a
-                href="/student/studentDashboard/transaction-history"
+              <Link
+                href="/transaction-history"
                 className="text-sm font-medium text-rose-600"
               >
                 View all
-              </a>
+              </Link>
             </div>
 
             <div className="mt-4 overflow-hidden">
@@ -331,12 +332,12 @@ export default function Dashboard() {
           <div className="rounded-2xl border border-slate-200 bg-white p-4">
             <div className="flex items-center justify-between">
               <h4 className="font-semibold">Available Manuals</h4>
-              <a
-                href="/student/studentDashboard/purchase-manual"
+              <Link
+                href="/purchase-manual"
                 className="text-sm font-medium text-rose-600"
               >
                 Purchase
-              </a>
+              </Link>
             </div>
 
             <ul className="mt-4 space-y-3">

@@ -82,7 +82,7 @@ export const KeycodeModal: React.FC<KeycodeModalProps> = ({ manual, onClose }) =
           <div className="border border-slate-100 bg-slate-50/50 rounded-xl p-4 mt-5 space-y-3">
             <div className="flex items-center justify-between text-xs">
               <span className="text-slate-500 font-medium">Manual</span>
-              <span className="font-semibold text-slate-900 font-mono text-right max-w-[220px] truncate">
+              <span className="font-semibold text-slate-900 font-mono text-right max-w-55 truncate">
                 {manual.code} – {manual.title}
               </span>
             </div>

@@ -1,7 +1,7 @@
 "use client"
 
 import React, { useState } from "react";
-import { ChevronDown, ChevronUp, CreditCard } from "lucide-react";
+import { ChevronDown, ChevronUp, CreditCard, Link } from "lucide-react";
 
 type FilterTab = "All" | "Paid" | "Failed" | "Refunded";
 
@@ -174,12 +174,12 @@ export default function Page() {
         </div>
 
         <div className="flex items-center gap-4">
-          <a
+          <Link
             href="/"
             className="rounded-md bg-[#F8FAFC] px-2 my-4 py-2 text-sm font-semibold text-black shadow-sm"
           >
             Export
-          </a>
+          </Link>
         </div>
       </div>
 
