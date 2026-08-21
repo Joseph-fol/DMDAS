@@ -1,12 +1,16 @@
-"use client"
+"use client";
 
-export default function Loading() {
+// app/(student)/loading.tsx
+export default function StudentDashboardLoading() {
   return (
-    <div className="flex min-h-[60vh] w-full items-center justify-center">
-      <div className="flex flex-col items-center gap-3">
-        <div className="h-9 w-9 animate-spin rounded-full border-3 border-neutral-200 border-t-neutral-900" />
-        <p className="text-xs font-medium text-neutral-500">Loading details...</p>
+    <div className="fixed inset-0 z-50 flex flex-col items-center justify-center bg-white/80 backdrop-blur-sm">
+      <div className="relative flex items-center justify-center">
+        {/* Outer Ring */}
+        <div className="h-12 w-12 rounded-full border-4 border-neutral-200 border-t-neutral-900 animate-spin" />
       </div>
+      <p className="mt-4 text-xs font-semibold uppercase tracking-wider text-neutral-600">
+        Loading...
+      </p>
     </div>
   );
 }

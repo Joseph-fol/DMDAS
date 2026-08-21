@@ -164,8 +164,8 @@ export default function Page() {
   });
 
   return (
-    <section className="mx-auto max-w-7xl space-y-6">
-      <div className="block lg:flex md:flex items-start justify-between gap-4 lg:py-3">
+    <section className="mx-auto max-w-7xl">
+      <div className="block lg:flex md:flex items-start justify-between gap-4 lg:py-1">
         <div className=" lg:flex-row items-start justify-between gap-4 lg:py-3">
           <h1 className="text-3xl font-extrabold text-black"> Payment Overview </h1>
           <p className="mt-2 text-md font-medium text-slate-800">
@@ -197,7 +197,7 @@ export default function Page() {
                       <p className="text-[14px] font-medium text-slate-600">
                         {stat.label}
                       </p>
-                      <div className="mt-1 text-3xl font-bold text-[#381E25]">
+                      <div className="mt-1 text-3xl font-extrabold text-[#381E25]">
                         {stat.value}
                       </div>
                     </div>
@@ -219,7 +219,7 @@ export default function Page() {
         </div>
       </div>
 
-      <div className="rounded-2xl border border-rose-100 bg-rose-50 p-4">
+      <div className="rounded-2xl border border-rose-100 bg-rose-50 p-4 mb-4">
         <div className="flex items-center justify-between">
           <div className="flex items-start gap-4">
             <div className="h-10 w-10 rounded-lg bg-rose-100 text-rose-700 flex items-center justify-center">
@@ -252,7 +252,7 @@ export default function Page() {
       </div>
 
 
-      <div className="w-full max-w-5xl mx-auto p-4 md:p-6 bg-white rounded-2xl border border-slate-200 shadow-sm font-sans text-slate-800">
+      <div className="w-full max-w-7xl mx-auto p-2 md:p-6 bg-white rounded-2xl border border-slate-200 shadow-sm font-sans text-slate-800">
         {/* Card Header */}
         <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 pb-4 border-b border-slate-100">
           <h2 className="text-xl font-bold tracking-tight text-slate-900">
