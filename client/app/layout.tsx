@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import "./globals.css";
 import { satoshi } from "./fonts";
+import NextTopLoader from 'nextjs-toploader';
 
 export const metadata: Metadata = {
   title: "DMDAS",
@@ -14,7 +15,9 @@ export default function RootLayout({
 }>) {
   return (
     <html lang="en" className={satoshi.className}>
-      <body>{children}</body>
+      <body>{children}
+        <NextTopLoader color="#EC003F" showSpinner={false} height={3} />
+      </body>
     </html>
   );
 }
